@@ -1,12 +1,12 @@
-,Sentences,Head,Tail,rel_type
-2,That early morning call marked a new phase in the collaborative relationship that Newsom has built with Trump behind the scenes. ,Trump,Newsom,working_for
-3,The governor has resolutely set politics aside. ,,,
-4,"Though there has been ""forcefulness"" on both sides, Newsom has tried to cultivate what one aide referred to as a relationship defined by ""mutual aid, respect, understanding"" in the midst of disaster.",Trump,Newsom,working_for
-5,"Cognizant of balancing Trump's penchant for punishing his critics with California's reliance on the federal government for personal protective equipment, ventilators, medical stations and emergency funding, Newsom has warmly praised the Trump's administration for their assistance during his near-daily briefings while reeling off a dizzying litany of facts about the state's readiness for the crisis.",Trump,Newsom,working_for
-6,"At this delicate diplomatic moment, Newsom has nimbly steered around questions that would lead to direct confrontation with Trump, including their disagreement over whether life can return to normal by Easter.",Newsom,Trump,cooperate
-7,"""We are clearly operating under a different set of assumptions,"" Newsom said when asked about Trump's desires during a recent briefing. ",Trump,Newsom,cooperate
-8,"Newsom added that in their ""many"" conversations in recent weeks, it has been clear to him that Trump's understands the ""unique challenges"" faced by states like New York, California and Washington state.",Trump,Newsom,cooperate
-9,"""I have no trepidation that whatever he decides to do from a national prism will not get in the way of our efforts here at the state level, to do what we need to do to hit this head on, bend the curve, get people back to work as quickly as we can."" ",Trump,Newsom,working_for
-10,Newsom has indicated that he does not intend to lift the stay-at-home order anytime soon.,,,
-11,"President Donald Trump greets California Gov.-elect Gavin Newsom as he prepares to tour wildfire damage in California on November 17, 2018.","Gavin Newsom
-",Donald Trump,working_for
+Sentences,Head,Tail,rel_type
+That early morning call marked a new phase in the collaborative relationship that Newsom has built with Trump behind the scenes. ,Trump,Newsom,working_for
+The governor has resolutely set politics aside. ,,,
+"Though there has been ""forcefulness"" on both sides, Newsom has tried to cultivate what one aide referred to as a relationship defined by ""mutual aid, respect, understanding"" in the midst of disaster.",Trump,Newsom,working_for
+"Cognizant of balancing Trump's penchant for punishing his critics with California's reliance on the federal government for personal protective equipment, ventilators, medical stations and emergency funding, Newsom has warmly praised the Trump's administration for their assistance during his near-daily briefings while reeling off a dizzying litany of facts about the state's readiness for the crisis.",Trump,Newsom,working_for
+"At this delicate diplomatic moment, Newsom has nimbly steered around questions that would lead to direct confrontation with Trump, including their disagreement over whether life can return to normal by Easter.",Newsom,Trump,cooperate
+"""We are clearly operating under a different set of assumptions,"" Newsom said when asked about Trump's desires during a recent briefing. ",Trump,Newsom,cooperate
+"Newsom added that in their ""many"" conversations in recent weeks, it has been clear to him that Trump's understands the ""unique challenges"" faced by states like New York, California and Washington state.",Trump,Newsom,cooperate
+"""I have no trepidation that whatever he decides to do from a national prism will not get in the way of our efforts here at the state level, to do what we need to do to hit this head on, bend the curve, get people back to work as quickly as we can."" ",Trump,Newsom,working_for
+Newsom has indicated that he does not intend to lift the stay-at-home order anytime soon.,,,
+"President Donald Trump greets California Gov.-elect Gavin Newsom as he prepares to tour wildfire damage in California on November 17, 2018.","Gavin Newsom
+Donald Trump,working_for
