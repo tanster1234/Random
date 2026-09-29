@@ -48,20 +48,15 @@ other two rooms are placeholders: set the real prices before going live.**
 
 ## Make bookings arrive somewhere
 
-For now the booking tool is frontend only. It collects dates, guests, room, name, phone or
-email, flight time and pickup, then shows the guest a reference number. Nothing is sent
-yet. To go live, edit `submitBooking()` in `js/booking.js`; it receives one object with
-everything:
+The booking tool has three modes, set by two values at the top of `js/booking.js`:
 
-```js
-{ ref, checkin, checkout, nights, adults, children, room: { id, name, rate },
-  estimatedTotal, guest: { name, phone, email }, flight: { arrival, number },
-  airportPickup, notes, createdAt }
-```
+- **Preview** (today): works end to end but sends nothing, and says so, with the phone number.
+- **WhatsApp**: set `whatsapp`. The final button opens WhatsApp with the whole request typed out.
+- **Sheet + email**: set `sheetUrl`. Each request becomes a row in the hotel's Google Sheet and an
+  email to reception, with a free Google Apps Script and no server.
 
-Common choices: a form service (Formspree, Basin, Getform), EmailJS, a Google Sheet via
-Apps Script, or the hotel's own booking system or API. Return a Promise; if it rejects,
-the guest sees an error with the phone number.
+Step-by-step setup (about 10 minutes): `booking-backend/SETUP.md`. The script to paste is
+`booking-backend/google-apps-script.gs`.
 
 ## Edit the film
 
@@ -97,11 +92,32 @@ CONTENT.md          everything carried over from the old site, with sources
 BRIEF.md            design brief and decisions
 ```
 
-## Deploy
+## Deploy (Vercel)
 
-Upload the folder as-is to any static host: Netlify (drag and drop), Vercel, Cloudflare
-Pages, GitHub Pages, or the current host's file manager. `src/`, `build.sh`,
-`BRIEF.md` and `CONTENT.md` aren't needed at runtime, but they're harmless to upload.
+`vercel.json` is included. It gives clean URLs, forwards the old WordPress addresses
+(`/contactus/`, `/trip/...`, `/refund-policy/`, `/chicken-bluff-gallery/`) to the matching
+sections, and sets security headers. `.vercelignore` keeps `src/`, the notes and the booking
+backend off the public site.
+
+**From the Vercel dashboard** (auto-deploys on every push):
+
+1. vercel.com → Add New → Project → import the `Random` repository.
+2. Root Directory: `africa-waka-waka`. Framework Preset: Other. Leave the build and output settings empty.
+3. The site lives on the branch `claude/optimistic-keller-y7ratz`. Either merge it into
+   `master`, or set that branch as the Production Branch in the project's settings and redeploy.
+4. Share the production address, `https://<project>.vercel.app`. Preview deployments are
+   behind Vercel login by default.
+
+**From a terminal** (Node installed):
+
+```bash
+git clone -b claude/optimistic-keller-y7ratz https://github.com/tanster1234/Random.git
+cd Random/africa-waka-waka
+npx vercel@latest --prod
+```
+
+**Custom domain:** Project → Settings → Domains → add `africawakawaka.com`, then follow the DNS
+steps at the registrar. Keep any existing email (MX) records as they are.
 
 ## Accessibility and fallbacks
 

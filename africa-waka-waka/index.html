@@ -708,6 +708,8 @@
             </div>
             <label class="toggle"><input type="checkbox" name="pickup" checked><span class="toggle-ui" aria-hidden="true"></span><span>Pick me up at the airport <b>(free)</b></span></label>
             <label class="field"><span>Anything we should know? <em>(optional)</em></span><textarea name="notes" rows="3"></textarea></label>
+            <label class="hp" aria-hidden="true">Leave this empty <input name="website" tabindex="-1" autocomplete="off"></label>
+            <p class="bk-preview" data-bk-preview hidden>Preview: booking requests aren’t sent to the hotel yet. To book now, call <a href="tel:+23290417670">+232 90 417670</a>.</p>
           </form>
         </section>
 
@@ -717,8 +719,11 @@
           <h3 class="display d-m" data-done-title>Request sent.</h3>
           <p class="lede" data-done-text></p>
           <dl class="done-summary" data-done-summary></dl>
-          <p class="small muted">Nothing has been charged. Keep your reference handy. Questions? Call <a href="tel:+23290417670">+232 90 417670</a>, day or night.</p>
-          <button class="btn btn--primary" type="button" data-close>Done</button>
+          <p class="small muted" data-done-note>Nothing has been charged. Keep your reference handy. Questions? Call <a href="tel:+23290417670">+232 90 417670</a>, day or night.</p>
+          <div class="done-actions">
+            <a class="btn btn--primary" data-wa-link hidden target="_blank" rel="noopener"><svg class="arrow" aria-hidden="true"><use href="#i-talk"/></svg><span>Send on WhatsApp</span></a>
+            <button class="btn btn--ghost" type="button" data-close>Done</button>
+          </div>
         </section>
       </div>
 
