@@ -48,15 +48,12 @@ other two rooms are placeholders: set the real prices before going live.**
 
 ## Make bookings arrive somewhere
 
-The booking tool has three modes, set by two values at the top of `js/booking.js`:
+The booking tool emails each request to reception through Web3Forms, a free form-to-email service.
+Paste a free access key into `emailKey` at the top of `js/booking.js` and push; setup takes about
+5 minutes and is described step by step in `BOOKINGS.md`.
 
-- **Preview** (today): works end to end but sends nothing, and says so, with the phone number.
-- **WhatsApp**: set `whatsapp`. The final button opens WhatsApp with the whole request typed out.
-- **Sheet + email**: set `sheetUrl`. Each request becomes a row in the hotel's Google Sheet and an
-  email to reception, with a free Google Apps Script and no server.
-
-Step-by-step setup (about 10 minutes): `booking-backend/SETUP.md`. The script to paste is
-`booking-backend/google-apps-script.gs`.
+Until a key is set, the tool runs in preview mode. It works end to end, sends nothing, and says
+so, with the phone number, so no visitor thinks they have booked.
 
 ## Edit the film
 
@@ -83,12 +80,13 @@ css/base.css        tokens (colours, type), buttons, layout
 css/site.css        sections, film overlays, HUD
 css/booking.css     booking drawer
 js/main.js          smooth scroll, film sync, header, reveals, pinned itinerary
-js/booking.js       booking tool (rates + submitBooking live here)
+js/booking.js       booking tool (rates, email key and submitBooking live here)
 js/gara.js          tie-dye generator for photo slots
 js/film.js          built film bundle (do not edit by hand; see src/film)
 assets/             fonts, favicon, film poster, photos
 vendor/             GSAP, ScrollTrigger, Lenis (+ licence notices)
 CONTENT.md          everything carried over from the old site, with sources
+BOOKINGS.md         how to switch on real booking emails
 BRIEF.md            design brief and decisions
 ```
 

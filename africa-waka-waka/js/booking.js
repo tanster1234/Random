@@ -13,18 +13,14 @@
   "use strict";
 
   var BOOKING = {
-    // Google Apps Script web-app URL (see booking-backend/SETUP.md). Each request becomes a
-    // row in the hotel's Google Sheet and an email to reception.
-    sheetUrl: "",
-    // The hotel's WhatsApp number, country code first, digits only (e.g. "23290417670").
-    // Guests get a one-tap WhatsApp message with their request.
-    whatsapp: "",
-    // Shown when a request cannot be sent.
+    // Free Web3Forms access key (see BOOKINGS.md). Each request is emailed to the address
+    // the key was created for. Empty = preview mode: the tool works, but nothing is sent,
+    // and it says so.
+    emailKey: "",
+    // Shown to guests when a request cannot be sent.
     phone: "+232 90 417670",
   };
-  // Neither sheetUrl nor whatsapp set = preview mode: the tool works, but nothing is sent,
-  // and it says so.
-  var MODE = BOOKING.sheetUrl ? "sheet" : BOOKING.whatsapp ? "whatsapp" : "preview";
+  var MODE = BOOKING.emailKey ? "email" : "preview";
 
   var ROOMS = [
     { id: "deluxe", name: "Deluxe Single Room", size: "18 m²", sleeps: 2, beds: "1 Queen bed", rate: 85, art: { kind: "rings", tone: "indigo", seed: 3 }, photo: "assets/photos/room-deluxe.jpg" },
@@ -33,18 +29,17 @@
   ];
   var LIMITS = { adults: [1, 5], children: [0, 4], nightsMax: 60, monthsAhead: 18 };
 
-  // The one place a request leaves the browser.
+  // The one place a request leaves the browser: an email to reception.
   function submitBooking(booking) {
-    if (MODE !== "sheet") return Promise.resolve({ ok: true, ref: booking.ref });
+    if (MODE !== "email" || booking.website) return Promise.resolve({ ok: true, ref: booking.ref }); // website = hidden field only bots fill
     var ctrl = typeof AbortController === "function" ? new AbortController() : null;
     var timer = ctrl ? setTimeout(function () {
       ctrl.abort();
     }, 20000) : 0;
-    return fetch(BOOKING.sheetUrl, {
+    return fetch("https://api.web3forms.com/submit", {
       method: "POST",
-      // text/plain keeps this a "simple" request, so Apps Script needs no CORS preflight
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify(booking),
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify(emailFields(booking)),
       signal: ctrl ? ctrl.signal : undefined,
     })
       .then(function (r) {
@@ -52,9 +47,31 @@
       })
       .then(function (res) {
         clearTimeout(timer);
-        if (!res || !res.ok) throw new Error((res && res.error) || "not saved");
+        if (!res || !res.success) throw new Error((res && res.message) || "not sent");
         return res;
       });
+  }
+
+  // What reception sees in the email, in this order.
+  function emailFields(b) {
+    return {
+      access_key: BOOKING.emailKey,
+      subject: "Booking request " + b.ref + ": " + b.room.name + ", " + b.checkin + " to " + b.checkout,
+      from_name: "Africa Waka Waka website",
+      replyto: b.guest.email || undefined, // Reply goes straight to the guest
+      Reference: b.ref,
+      Room: b.room.name,
+      Arrival: fmt(fromIso(b.checkin), true),
+      Departure: fmt(fromIso(b.checkout), true),
+      Nights: b.nights,
+      Guests: plural(b.adults, "adult", "adults") + (b.children ? ", " + plural(b.children, "child", "children") : ""),
+      "Estimated total": money(b.estimatedTotal) + " (" + money(b.room.rate) + " a night)",
+      "Airport pickup": b.airportPickup ? "Yes" + (b.flight.number ? ", flight " + b.flight.number : "") + (b.flight.arrival ? ", landing " + b.flight.arrival : "") : "No",
+      Name: b.guest.name,
+      Phone: b.guest.phone || "-",
+      Email: b.guest.email || "-",
+      Notes: b.notes || "-",
+    };
   }
 
   /* ---------------------------------------------------------------- helpers */
@@ -506,7 +523,7 @@
       label = "Your details";
       enabled = !!S.room;
     } else if (S.step === 3) {
-      label = S.busy ? "Sending…" : MODE === "whatsapp" ? "Send on WhatsApp" : "Request booking";
+      label = S.busy ? "Sending…" : "Request booking";
       enabled = !S.busy;
     }
     els.go.innerHTML = label + '<svg class="arrow" aria-hidden="true"><use href="#i-arrow"/></svg>';
@@ -570,17 +587,6 @@
       page: location.href.split("#")[0],
       createdAt: new Date().toISOString(),
     };
-    if (MODE === "whatsapp") {
-      // opened inside the click, so pop-up blockers allow it
-      var win = window.open(whatsappUrl(booking), "_blank");
-      if (win) {
-        try {
-          win.opener = null;
-        } catch (e) {}
-      }
-      showDone(booking, win ? "whatsapp" : "whatsapp-blocked");
-      return;
-    }
     S.busy = true;
     renderFoot();
     submitBooking(booking)
@@ -596,54 +602,17 @@
       });
   }
 
-  function whatsappText(b) {
-    var lines = [
-      "Hello Africa Waka Waka, I’d like to book a room.",
-      "",
-      "*Reference:* " + b.ref,
-      "*Room:* " + b.room.name,
-      "*Arrival:* " + fmt(fromIso(b.checkin), true),
-      "*Departure:* " + fmt(fromIso(b.checkout), true) + " (" + plural(b.nights, "night", "nights") + ")",
-      "*Guests:* " + plural(b.adults, "adult", "adults") + (b.children ? ", " + plural(b.children, "child", "children") : ""),
-      "*Estimate:* " + money(b.estimatedTotal),
-      "*Airport pickup:* " + (b.airportPickup ? "Yes" + (b.flight.number ? ", flight " + b.flight.number : "") + (b.flight.arrival ? ", landing " + b.flight.arrival : "") : "No"),
-      "*Name:* " + b.guest.name,
-    ];
-    if (b.guest.phone) lines.push("*Phone:* " + b.guest.phone);
-    if (b.guest.email) lines.push("*Email:* " + b.guest.email);
-    if (b.notes) lines.push("*Notes:* " + b.notes);
-    return lines.join("\n");
-  }
-
-  function whatsappUrl(b) {
-    return "https://wa.me/" + BOOKING.whatsapp.replace(/\D/g, "") + "?text=" + encodeURIComponent(whatsappText(b));
-  }
-
   function showDone(b, mode) {
     var first = b.guest.name.split(/\s+/)[0];
     var contact = b.guest.phone || b.guest.email;
     if (mode === "preview") {
       els.doneTitle.textContent = "Thank you, " + first + ".";
       els.doneText.textContent = "This booking tool is still a preview, so your request was not sent to the hotel. To book now, call " + BOOKING.phone + " and quote " + b.ref + ".";
-    } else if (mode === "whatsapp" || mode === "whatsapp-blocked") {
-      els.doneTitle.textContent = "Almost done, " + first + ".";
-      els.doneText.textContent =
-        (mode === "whatsapp" ? "Your request is waiting in WhatsApp: press send there. " : "Tap the button below to send your request on WhatsApp. ") +
-        "Reception will confirm in that chat" + (b.airportPickup ? ", and the shuttle will be waiting at arrivals." : ".");
     } else {
       els.doneTitle.textContent = "Thank you, " + first + ".";
       els.doneText.textContent =
         "Your request for the " + b.room.name + " is in. Our 24/7 reception will contact you on " + contact + " to confirm" +
         (b.airportPickup ? ", and the shuttle will be waiting at arrivals." : ".");
-    }
-    var wa = $("[data-wa-link]", root);
-    if (wa) {
-      var showWa = !!BOOKING.whatsapp;
-      wa.hidden = !showWa;
-      if (showWa) {
-        wa.href = whatsappUrl(b);
-        wa.querySelector("span").textContent = mode === "whatsapp" ? "Open WhatsApp again" : mode === "sheet" ? "Also message us on WhatsApp" : "Send on WhatsApp";
-      }
     }
     var rows = [
       ["Reference", b.ref, "ref"],
@@ -660,7 +629,7 @@
       })
       .join("");
     go(4);
-    els.title.textContent = mode === "preview" ? "Preview only" : mode === "sheet" ? "Request received" : "One last tap";
+    els.title.textContent = mode === "preview" ? "Preview only" : "Request received";
   }
 
   function escapeHtml(s) {
