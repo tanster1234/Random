@@ -1,0 +1,55 @@
+# Africa Waka Waka · Apache settings for cPanel hosting (GoDaddy)
+# Does what vercel.json does on Vercel: forwards the old WordPress addresses to the
+# matching section, sets security headers and caches the fonts.
+
+DirectoryIndex index.html
+
+<IfModule mod_mime.c>
+  AddType text/javascript .js
+  AddType text/css .css
+  AddType image/svg+xml .svg
+  AddType font/woff2 .woff2
+  AddCharset utf-8 .html .css .js .svg .txt
+</IfModule>
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Once https://africawakawaka.com shows a padlock, remove the # from the next three
+  # lines. They send http:// and www. visitors to https://africawakawaka.com.
+  # RewriteCond %{HTTPS} !=on [OR]
+  # RewriteCond %{HTTP_HOST} ^www\. [NC]
+  # RewriteRule ^ https://africawakawaka.com%{REQUEST_URI} [R=301,L]
+
+  # Old WordPress addresses
+  RewriteRule ^contactus/?$ /#contact [R=301,NE,QSD,L]
+  RewriteRule ^refund-policy/?$ /#policies [R=301,NE,QSD,L]
+  RewriteRule ^chicken-bluff-gallery/?$ /#dining [R=301,NE,QSD,L]
+  RewriteRule ^trip(/.*)?$ /#journeys [R=301,NE,QSD,L]
+
+  # Keep the film source and notes private if the whole folder is ever uploaded
+  RewriteRule ^(src|dist|\.build-tools)(/|$) - [F,L]
+  RewriteRule ^[^/]+\.(md|sh)$ - [F,L]
+</IfModule>
+
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+
+  # Pages, code and photos: browsers check for a newer copy on each visit, so
+  # uploads show up straight away. Fonts never change: cache them for a year.
+  <FilesMatch "\.(html|css|js|jpe?g|png|webp|svg)$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+  <FilesMatch "\.woff2$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+</IfModule>
+
+<IfModule mod_deflate.c>
+  <IfModule mod_filter.c>
+    AddOutputFilterByType DEFLATE text/html text/css text/javascript application/javascript image/svg+xml text/plain
+  </IfModule>
+</IfModule>

@@ -37,7 +37,8 @@ slot automatically; no code changes are needed.
 | `pool.jpg` | "Swimming pool with a view" tile |
 
 Landscape photos around 1600px wide, saved at about 80% JPEG quality, work well.
-Until a file exists, the browser logs a harmless 404 for it.
+Until a file exists, the browser logs a harmless 404 for it. On the live site, upload them to
+`public_html/assets/photos/` in cPanel's File Manager.
 
 ## Set room rates
 
@@ -49,8 +50,8 @@ other two rooms are placeholders: set the real prices before going live.**
 ## Make bookings arrive somewhere
 
 The booking tool emails each request to reception through Web3Forms, a free form-to-email service.
-Paste a free access key into `emailKey` at the top of `js/booking.js` and push; setup takes about
-5 minutes and is described step by step in `BOOKINGS.md`.
+Paste a free access key into `emailKey` at the top of `js/booking.js` and upload that file to the
+hosting; setup takes about 5 minutes and is described step by step in `BOOKINGS.md`.
 
 Until a key is set, the tool runs in preview mode. It works end to end, sends nothing, and says
 so, with the phone number, so no visitor thinks they have booked.
@@ -85,37 +86,56 @@ js/gara.js          tie-dye generator for photo slots
 js/film.js          built film bundle (do not edit by hand; see src/film)
 assets/             fonts, favicon, film poster, photos
 vendor/             GSAP, ScrollTrigger, Lenis (+ licence notices)
+.htaccess           Apache settings for cPanel hosting (redirects, headers, caching)
+package.sh          zips the public files for uploading to cPanel
+vercel.json         the same settings for Vercel
 CONTENT.md          everything carried over from the old site, with sources
 BOOKINGS.md         how to switch on real booking emails
 BRIEF.md            design brief and decisions
 ```
 
-## Deploy (Vercel)
+## Deploy (GoDaddy cPanel hosting)
 
-`vercel.json` is included. It gives clean URLs, forwards the old WordPress addresses
-(`/contactus/`, `/trip/...`, `/refund-policy/`, `/chicken-bluff-gallery/`) to the matching
-sections, and sets security headers. `.vercelignore` keeps `src/`, the notes and the booking
-backend off the public site.
+The site is plain files, so any cPanel "Web Hosting" plan runs it. Managed WordPress and Website
+Builder plans don't: they can't host your own files.
 
-**From the Vercel dashboard** (auto-deploys on every push):
+**First upload**
 
-1. vercel.com → Add New → Project → import the `Random` repository.
-2. Root Directory: `africa-waka-waka`. Framework Preset: Other. Leave the build and output settings empty.
-3. The site lives on the branch `claude/optimistic-keller-y7ratz`. Either merge it into
-   `master`, or set that branch as the Production Branch in the project's settings and redeploy.
-4. Share the production address, `https://<project>.vercel.app`. Preview deployments are
-   behind Vercel login by default.
+1. Run `./package.sh`. It writes `dist/africa-waka-waka-site.zip` (about 460 KB) with only the
+   public files and the `.htaccess`.
+2. GoDaddy → My Products → Web Hosting → Manage → cPanel Admin → File Manager → `public_html`.
+3. If `public_html` already has files (an old site or a placeholder page), download a copy, then
+   delete them. Leave `cgi-bin` and `.well-known` alone.
+4. Upload the zip, right-click it → Extract into `/public_html`, then delete the zip.
+   `index.html` must sit directly in `public_html`, not in a subfolder.
+5. Open the domain. If it still shows the old site, point the domain at the hosting in
+   GoDaddy's DNS settings: the `A` record for `@` gets the hosting's IP address (cPanel lists it
+   as "Shared IP Address"), and `www` is a `CNAME` to `@`. Leave the `MX` and other email
+   records as they are.
+6. HTTPS: cPanel → SSL/TLS Status → Run AutoSSL. It's free and renews itself, so GoDaddy's
+   paid SSL isn't needed. Once https:// shows a padlock, open `.htaccess` in File Manager
+   (Settings → Show Hidden Files) and remove the `#` from the three lines it points out.
 
-**From a terminal** (Node installed):
+**Updating later:** upload only the changed files over the old ones (for example `js/booking.js`
+after adding the email key, or photos into `assets/photos/`), or build the zip again and
+extract it over the top. Browsers check for newer copies on every visit, so changes show up
+straight away.
 
-```bash
-git clone -b claude/optimistic-keller-y7ratz https://github.com/tanster1234/Random.git
-cd Random/africa-waka-waka
-npx vercel@latest --prod
-```
+`.htaccess` forwards the old WordPress addresses (`/contactus/`, `/trip/...`, `/refund-policy/`,
+`/chicken-bluff-gallery/`) to the matching sections, sets security headers, file types,
+compression and font caching, and blocks `src/` and the notes if the whole folder is ever
+uploaded. It was tested on Apache 2.4.
 
-**Custom domain:** Project → Settings → Domains → add `africawakawaka.com`, then follow the DNS
-steps at the registrar. Keep any existing email (MX) records as they are.
+## Other hosts
+
+Any static host works; point it at this folder with no build step.
+
+- **Vercel:** `vercel.json` holds the same settings, and `.vercelignore` keeps `src/` and the
+  notes off the site. Import the repository with Root Directory `africa-waka-waka` and
+  Framework Preset "Other". Vercel's free Hobby plan is for non-commercial use only, so a hotel
+  site needs the Pro plan.
+- **Cloudflare Pages:** free, and business use is allowed. The old-address redirects would need
+  a `_redirects` file, which isn't included yet.
 
 ## Accessibility and fallbacks
 

@@ -5,3 +5,6 @@ BRIEF.md
 CONTENT.md
 README.md
 .build-tools
+dist
+package.sh
+.htaccess

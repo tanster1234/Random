@@ -10,7 +10,8 @@ form-to-email service. There is no server, no password and nothing to install: j
    them to forward it.
 2. Open `js/booking.js` and paste the key into `emailKey` at the top:
    `emailKey: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",`
-3. Push to GitHub. Vercel redeploys in about 30 seconds.
+3. Upload the updated `js/booking.js` to `public_html/js/` in cPanel's File Manager, replacing
+   the old file.
 4. Make a test booking on the live site and check the inbox, including spam. Mark the first
    one "not spam" so the next ones land in the inbox.
 
