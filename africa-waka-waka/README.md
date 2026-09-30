@@ -45,16 +45,24 @@ Until a file exists, the browser logs a harmless 404 for it. On the live site, u
 
 ## Set room rates
 
-Rates live in one place: the `ROOMS` list at the top of `js/booking.js`. The room cards, the
-"from $…" buttons and the booking totals all read from it.
-**Only the Deluxe rate ($85 "from", as listed publicly) is confirmed. $95 and $150 for the
-other two rooms are placeholders: set the real prices before going live.**
+Rates live in the `ROOMS` list at the top of `js/booking.js`. The room cards, the "from $…"
+buttons and the booking totals all read from it. Rates confirmed by the hotel in September 2026:
+
+| Room | Per night |
+|---|---|
+| Deluxe Single Room | $115 |
+| Deluxe Single Room · Balcony, Pool View | $125 |
+| Executive Suite · Resort View | $145 |
+
+`index.html` repeats these numbers (the `data-rate` values and the "from $…" buttons) so they
+show before the script loads; change them there too.
 
 ## Make bookings arrive somewhere
 
 Booking requests go to `book.php` on the hosting. It emails each request to the hotel and sends
-the guest a copy that says plainly it's a request, not a confirmed booking. Put the hotel's inbox
-in `HOTEL_EMAIL` at the top of `book.php` and upload it; `BOOKINGS.md` has the steps.
+the guest a copy that says plainly it's a request, not a confirmed booking. Requests go to
+contactafricawakawaka@gmail.com with a copy to awwreceptionist@gmail.com (`HOTEL_EMAIL` and
+`HOTEL_COPY` at the top of `book.php`); `BOOKINGS.md` has the steps.
 
 Until the inbox is set, the tool runs in preview mode. It works end to end, sends nothing, and
 says so, with the phone number, so no visitor thinks they have booked.

@@ -8,8 +8,7 @@
  *   guest a copy (see BOOKINGS.md). A request is never a confirmed booking, and the tool
  *   says so at every step.
  * ▸ ROOMS: rates live here and nowhere else; the room cards read them too.
- *   Only the Deluxe "from $85" was published; the other two rates are placeholders
- *   until the owner confirms them.
+ *   Rates confirmed by the hotel, September 2026.
  */
 (function () {
   "use strict";
@@ -25,9 +24,9 @@
   var MODE = "preview"; // becomes "email" once book.php reports it is set up
 
   var ROOMS = [
-    { id: "deluxe", name: "Deluxe Single Room", size: "18 m²", sleeps: 2, beds: "1 Queen bed", rate: 85, art: { kind: "rings", tone: "indigo", seed: 3 }, photo: "assets/photos/room-deluxe.jpg" },
-    { id: "balcony", name: "Deluxe Single Room · Balcony, Pool View", size: "15 m²", sleeps: 2, beds: "1 Queen bed", rate: 95, art: { kind: "stripes", tone: "laterite", seed: 11 }, photo: "assets/photos/room-balcony.jpg" },
-    { id: "suite", name: "Executive Suite · Resort View", size: "31 m²", sleeps: 5, beds: "1 King + 1 Queen", rate: 150, art: { kind: "sunburst", tone: "gold", seed: 7 }, photo: "assets/photos/room-suite.jpg" },
+    { id: "deluxe", name: "Deluxe Single Room", size: "18 m²", sleeps: 2, beds: "1 Queen bed", rate: 115, art: { kind: "rings", tone: "indigo", seed: 3 }, photo: "assets/photos/room-deluxe.jpg" },
+    { id: "balcony", name: "Deluxe Single Room · Balcony, Pool View", size: "15 m²", sleeps: 2, beds: "1 Queen bed", rate: 125, art: { kind: "stripes", tone: "laterite", seed: 11 }, photo: "assets/photos/room-balcony.jpg" },
+    { id: "suite", name: "Executive Suite · Resort View", size: "31 m²", sleeps: 5, beds: "1 King + 1 Queen", rate: 145, art: { kind: "sunburst", tone: "gold", seed: 7 }, photo: "assets/photos/room-suite.jpg" },
   ];
   var LIMITS = { adults: [1, 5], children: [0, 4], nightsMax: 60, monthsAhead: 18 };
 

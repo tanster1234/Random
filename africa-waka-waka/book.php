@@ -12,8 +12,10 @@
  * preview mode and nothing is sent.
  */
 
-// The inbox that receives booking requests, for example 'reservations@africawakawaka.com'.
-const HOTEL_EMAIL = '';
+// The inbox that receives booking requests (guests' replies come here too), and a second
+// inbox that gets a copy of each request. Leave HOTEL_COPY as '' for no copy.
+const HOTEL_EMAIL = 'contactafricawakawaka@gmail.com';
+const HOTEL_COPY = 'awwreceptionist@gmail.com';
 
 // The sender on both emails. Keep it an address at the website's own domain.
 const FROM_EMAIL = 'bookings@africawakawaka.com';
@@ -48,7 +50,7 @@ if (rate_limited()) reply(429, ['ok' => false, 'error' => 'rate_limited']);
 $b = clean_booking($in);
 if (is_string($b)) reply(400, ['ok' => false, 'error' => $b]);
 
-if (!send_mail(HOTEL_EMAIL, hotel_subject($b), hotel_text($b), hotel_html($b), $b['email'], false)) {
+if (!send_mail(HOTEL_EMAIL, hotel_subject($b), hotel_text($b), hotel_html($b), $b['email'], false, HOTEL_COPY)) {
     log_request($b, 'not sent');
     reply(502, ['ok' => false, 'error' => 'send_failed']);
 }
@@ -349,7 +351,7 @@ function plural($n, $one, $many)
 
 /* ------------------------------------------------------------------ sending and the log */
 
-function send_mail($to, $subject, $text, $html, $replyTo, $autoReply)
+function send_mail($to, $subject, $text, $html, $replyTo, $autoReply, $cc = '')
 {
     if (!function_exists('mail')) return false;
     $boundary = '=_aww_' . bin2hex(random_bytes(12));
@@ -359,6 +361,7 @@ function send_mail($to, $subject, $text, $html, $replyTo, $autoReply)
         'MIME-Version: 1.0',
         'Content-Type: multipart/alternative; boundary="' . $boundary . '"',
     ];
+    if ($cc !== '') $headers[] = 'Cc: ' . $cc;
     if ($autoReply) $headers[] = 'Auto-Submitted: auto-replied';
     $part = function ($type, $content) use ($boundary) {
         return '--' . $boundary . "\r\n"

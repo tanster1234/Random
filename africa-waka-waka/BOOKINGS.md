@@ -13,20 +13,21 @@ hotel replies to confirm.
 
 ## Setup (about 10 minutes)
 
-1. In `book.php`, put the hotel's inbox in `HOTEL_EMAIL`:
-   `const HOTEL_EMAIL = 'reservations@africawakawaka.com';`
-   It can also be changed on the server: cPanel → File Manager → `public_html` → right-click
-   `book.php` → Edit.
+1. The inboxes are set at the top of `book.php`. Requests go to `HOTEL_EMAIL`
+   (contactafricawakawaka@gmail.com), which also receives guests' replies, with a copy to
+   `HOTEL_COPY` (awwreceptionist@gmail.com). To change them later: cPanel → File Manager →
+   `public_html` → right-click `book.php` → Edit.
 2. Upload `book.php`, `index.html`, `js/booking.js` and `css/booking.css` to the same places in
    `public_html`, replacing the old files.
 3. Clear the cache in GoDaddy's website firewall, so visitors get the new files.
-4. Make a test booking with your own email address. The hotel's inbox and yours should each
-   get an email within a few minutes. Check Junk or Spam too, and mark them "Not junk".
-5. If an email lands in spam or doesn't arrive, open cPanel → Email Deliverability. If it shows
-   problems for africawakawaka.com, click Manage and add the records it suggests at GoDaddy
-   (Domain → DNS). DKIM is a new TXT record. For SPF, edit the existing record rather than
-   adding a second one, and keep `include:secureserver.net` in it, because the hotel's
-   Microsoft 365 email relies on it.
+4. Let Gmail verify the emails. Gmail turns away or spam-folders mail it can't trace to the
+   domain, so do this before relying on the form. Open cPanel → Email Deliverability; next to
+   africawakawaka.com click Manage, and add the records it suggests at GoDaddy (Domain → DNS).
+   DKIM is a new TXT record. For SPF, edit the existing record rather than adding a second
+   one, and keep `include:secureserver.net` in it, because the domain's Microsoft 365 email
+   relies on it.
+5. Make a test booking with your own email address. Within a few minutes three emails should
+   arrive: one at each hotel inbox and one at yours. Check Spam too, and mark them "Not spam".
 
 Until `HOTEL_EMAIL` is set, the tool runs in **preview mode**: it works end to end, sends nothing,
 and tells visitors to call +232 90 417670 instead.

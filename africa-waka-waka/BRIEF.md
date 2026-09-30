@@ -48,8 +48,8 @@ Book (night) → Policies: refund + check-in/out + trip payments (sand) → Cont
 ## Booking tool
 Drawer/sheet. Step 1 "When do you land?" (arrival date, nights, guests) → Step 2 room → Step 3
 details (name, phone/email, flight time, free pickup ✓) → confirmation with reference.
-Rates live in one config block in js/booking.js. Only "$85 from" is sourced — other rates are
-placeholders for the owner to confirm. `submitBooking()` is the single hook for a backend.
+Rates live in one config block in js/booking.js (confirmed by the hotel: $115, $125, $145).
+`submitBooking()` is the single hook for a backend.
 
 ## Engineering
 - vendor/: gsap, ScrollTrigger, lenis (UMD). three.js bundled + tree-shaken with esbuild into js/film.js
