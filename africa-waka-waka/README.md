@@ -24,6 +24,9 @@ python3 -m http.server 8080      # or: npx serve .
 Handy URL flags: `?still` shows the page without the film (the reduced-motion version),
 `?debug` logs frame timing to the console, and `?jump=1200` opens the page scrolled to 1200px.
 
+The booking tool needs PHP to send anything, so with the servers above it runs in preview mode.
+`php -S localhost:8080` serves the site with `book.php` working.
+
 ## Add real photos (recommended)
 
 Drop JPGs into `assets/photos/` with these names. Each one replaces the tie-dye art in its
@@ -49,12 +52,12 @@ other two rooms are placeholders: set the real prices before going live.**
 
 ## Make bookings arrive somewhere
 
-The booking tool emails each request to reception through Web3Forms, a free form-to-email service.
-Paste a free access key into `emailKey` at the top of `js/booking.js` and upload that file to the
-hosting; setup takes about 5 minutes and is described step by step in `BOOKINGS.md`.
+Booking requests go to `book.php` on the hosting. It emails each request to the hotel and sends
+the guest a copy that says plainly it's a request, not a confirmed booking. Put the hotel's inbox
+in `HOTEL_EMAIL` at the top of `book.php` and upload it; `BOOKINGS.md` has the steps.
 
-Until a key is set, the tool runs in preview mode. It works end to end, sends nothing, and says
-so, with the phone number, so no visitor thinks they have booked.
+Until the inbox is set, the tool runs in preview mode. It works end to end, sends nothing, and
+says so, with the phone number, so no visitor thinks they have booked.
 
 ## Edit the film
 
@@ -81,7 +84,8 @@ css/base.css        tokens (colours, type), buttons, layout
 css/site.css        sections, film overlays, HUD
 css/booking.css     booking drawer
 js/main.js          smooth scroll, film sync, header, reveals, pinned itinerary
-js/booking.js       booking tool (rates, email key and submitBooking live here)
+js/booking.js       booking tool (rates and submitBooking live here)
+book.php            emails each booking request to the hotel, with a copy to the guest
 js/gara.js          tie-dye generator for photo slots
 js/film.js          built film bundle (do not edit by hand; see src/film)
 assets/             fonts, favicon, film poster, photos
@@ -114,12 +118,13 @@ Builder plans don't: they can't host your own files.
    records as they are.
 6. HTTPS: cPanel → SSL/TLS Status → Run AutoSSL. It's free and renews itself, so GoDaddy's
    paid SSL isn't needed. Once https:// shows a padlock, open `.htaccess` in File Manager
-   (Settings → Show Hidden Files) and remove the `#` from the three lines it points out.
+   (Settings → Show Hidden Files) and remove the `#` from the five lines it points out.
 
-**Updating later:** upload only the changed files over the old ones (for example `js/booking.js`
-after adding the email key, or photos into `assets/photos/`), or build the zip again and
-extract it over the top. Browsers check for newer copies on every visit, so changes show up
-straight away.
+**Updating later:** upload only the changed files over the old ones (for example photos into
+`assets/photos/`), or build the zip again and extract it over the top. Extracting the zip also
+replaces `.htaccess` and `book.php`, so redo any edits made to them on the server. The site sits
+behind GoDaddy's website firewall, which caches pages: clear its cache after an upload.
+Browsers themselves check for newer copies on every visit.
 
 `.htaccess` forwards the old WordPress addresses (`/contactus/`, `/trip/...`, `/refund-policy/`,
 `/chicken-bluff-gallery/`) to the matching sections, sets security headers, file types,
@@ -128,7 +133,8 @@ uploaded. It was tested on Apache 2.4.
 
 ## Other hosts
 
-Any static host works; point it at this folder with no build step.
+Any static host works; point it at this folder with no build step. Without PHP, `book.php`
+can't run, so the booking tool stays in preview mode.
 
 - **Vercel:** `vercel.json` holds the same settings, and `.vercelignore` keeps `src/` and the
   notes off the site. Import the repository with Root Directory `africa-waka-waka` and

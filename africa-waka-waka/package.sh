@@ -4,7 +4,7 @@
 set -e
 cd "$(dirname "$0")"
 rm -rf dist && mkdir -p dist/site/assets/photos
-cp -R index.html .htaccess css js assets vendor dist/site/
+cp -R index.html .htaccess book.php css js assets vendor dist/site/
 find dist/site -name .DS_Store -delete
 (cd dist/site && zip -rqX ../africa-waka-waka-site.zip .)
 rm -rf dist/site

@@ -15,9 +15,13 @@ DirectoryIndex index.html
 <IfModule mod_rewrite.c>
   RewriteEngine On
 
-  # Once https://africawakawaka.com shows a padlock, remove the # from the next three
-  # lines. They send http:// and www. visitors to https://africawakawaka.com.
-  # RewriteCond %{HTTPS} !=on [OR]
+  # Once https://africawakawaka.com shows a padlock, remove the # from the next five
+  # lines. They send http:// and www. visitors to https://africawakawaka.com. The
+  # X-Forwarded-Proto check stops a redirect loop behind GoDaddy's firewall, which may
+  # reach this hosting over plain http.
+  # RewriteCond %{HTTPS} !=on
+  # RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+  # RewriteRule ^ https://africawakawaka.com%{REQUEST_URI} [R=301,L]
   # RewriteCond %{HTTP_HOST} ^www\. [NC]
   # RewriteRule ^ https://africawakawaka.com%{REQUEST_URI} [R=301,L]
 

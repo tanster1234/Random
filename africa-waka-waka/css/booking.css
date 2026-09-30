@@ -599,13 +599,30 @@
   overflow: hidden;
 }
 .bk-preview {
-  margin: 4px 0 0;
+  margin: 0;
   padding: 12px 14px;
   border-radius: 12px;
   background: rgba(180, 80, 43, 0.1);
   color: var(--laterite-deep);
   font-size: 14px;
   font-weight: 600;
+}
+/* "a request, not a booking" */
+.bk-notice {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(31, 47, 92, 0.08);
+  color: var(--indigo);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.bk-done .bk-notice {
+  margin: 0 0 18px;
+  font-size: 15px;
+}
+.done-summary .status dd {
+  color: var(--indigo);
 }
 
 /* foot */

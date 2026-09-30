@@ -1,38 +1,50 @@
-# Switching on real bookings (email only)
+# Switching on real bookings
 
-Booking requests are emailed to the hotel through [Web3Forms](https://web3forms.com), a free
-form-to-email service. There is no server, no password and nothing to install: just one key.
+Booking requests go to `book.php`, a small script on the website's GoDaddy hosting. For each
+request it sends two emails through the hosting's own mail, with no outside service or key:
 
-## Setup (about 5 minutes)
+- **To the hotel:** every detail of the request. Pressing **Reply** answers the guest.
+- **To the guest:** a copy headed "We’ve received your booking request", which says plainly
+  that it is not a booking confirmation and the room is not reserved yet, and that reception
+  will reply to confirm. Replying to it reaches the hotel.
 
-1. Go to https://web3forms.com, enter the email address that should receive booking requests,
-   and create an access key. The key is sent to that inbox. If it is the hotel's inbox, ask
-   them to forward it.
-2. Open `js/booking.js` and paste the key into `emailKey` at the top:
-   `emailKey: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",`
-3. Upload the updated `js/booking.js` to `public_html/js/` in cPanel's File Manager, replacing
-   the old file.
-4. Make a test booking on the live site and check the inbox, including spam. Mark the first
-   one "not spam" so the next ones land in the inbox.
+The website says the same thing before and after sending: a request is not a booking until the
+hotel replies to confirm.
 
-Until a key is set, the tool runs in **preview mode**: it works end to end, sends nothing, and
-tells the guest to call +232 90 417670 instead.
+## Setup (about 10 minutes)
 
-## What reception receives
+1. In `book.php`, put the hotel's inbox in `HOTEL_EMAIL`:
+   `const HOTEL_EMAIL = 'reservations@africawakawaka.com';`
+   It can also be changed on the server: cPanel → File Manager → `public_html` → right-click
+   `book.php` → Edit.
+2. Upload `book.php`, `index.html`, `js/booking.js` and `css/booking.css` to the same places in
+   `public_html`, replacing the old files.
+3. Clear the cache in GoDaddy's website firewall, so visitors get the new files.
+4. Make a test booking with your own email address. The hotel's inbox and yours should each
+   get an email within a few minutes. Check Junk or Spam too, and mark them "Not junk".
+5. If an email lands in spam or doesn't arrive, open cPanel → Email Deliverability. If it shows
+   problems for africawakawaka.com, click Manage and add the records it suggests at GoDaddy
+   (Domain → DNS). DKIM is a new TXT record. For SPF, edit the existing record rather than
+   adding a second one, and keep `include:secureserver.net` in it, because the hotel's
+   Microsoft 365 email relies on it.
 
-One email per request, with the subject `Booking request AWW-XXXXXX: <room>, <arrival> to <departure>`.
-It lists the reference, room, dates, nights, guests, estimated total, airport pickup and flight,
-and the guest's name, phone, email and notes. Pressing **Reply** answers the guest directly when
-they gave an email; otherwise call them on the number provided.
-
-Requests are not instant confirmations. Reception checks availability, including rooms sold on
-Booking.com and Expedia, then confirms by email or phone. To take a deposit, put a payment link or
-mobile-money details in that reply. Nothing on the website has to change.
+Until `HOTEL_EMAIL` is set, the tool runs in **preview mode**: it works end to end, sends nothing,
+and tells visitors to call +232 90 417670 instead.
 
 ## Good to know
 
-- Web3Forms' free plan is meant for small sites; check its current monthly limit on their pricing
-  page. A new key can be made at any time, and changing the key is the only update needed.
-- A hidden form field quietly drops submissions from simple spam bots.
+- Requests are never instant confirmations. Reception checks availability, including rooms sold
+  elsewhere, then confirms by replying to the email or suggests other dates. To take a deposit,
+  put a payment link or mobile-money details in that reply.
+- The wording of both emails lives in `book.php` (`hotel_text`, `guest_text` and their HTML
+  versions).
+- Every request is also saved to `booking-requests.csv` in the hosting's home folder, one level
+  above `public_html`, so it isn't public. Download it from cPanel's File Manager if an email ever
+  goes missing. Set `LOG_FILE` to `''` in `book.php` to turn this off.
+- Spam protection: a hidden field that only bots fill in, a limit of 3 requests per visitor in 10
+  minutes and 10 a day, and requests sent from other websites are refused. The guest's copy only
+  repeats checked details (dates, room, guests), so the form can't be used to send messages to
+  other people.
+- GoDaddy's hosting sends up to 500 emails an hour, and each request uses two.
 - If requests grow to several a day, or double bookings with Booking.com start happening, move
   to a booking engine with a channel manager (for example Beds24 or Cloudbeds).

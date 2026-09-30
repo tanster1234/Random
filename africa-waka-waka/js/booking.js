@@ -2,9 +2,11 @@
  * Africa Waka Waka — booking drawer.
  *
  * Opens from any [data-book] button (data-book="<room id>" preselects a room).
- * Flow: 1 dates + guests → 2 room → 3 details → 4 confirmation.
+ * Flow: 1 dates + guests → 2 room → 3 details → 4 request sent.
  *
- * ▸ BOOKING: switch real bookings on here. Both settings are optional and free.
+ * ▸ BOOKING: requests go to book.php on the hosting, which emails the hotel and sends the
+ *   guest a copy (see BOOKINGS.md). A request is never a confirmed booking, and the tool
+ *   says so at every step.
  * ▸ ROOMS: rates live here and nowhere else; the room cards read them too.
  *   Only the Deluxe "from $85" was published; the other two rates are placeholders
  *   until the owner confirms them.
@@ -13,14 +15,14 @@
   "use strict";
 
   var BOOKING = {
-    // Free Web3Forms access key (see BOOKINGS.md). Each request is emailed to the address
-    // the key was created for. Empty = preview mode: the tool works, but nothing is sent,
-    // and it says so.
-    emailKey: "",
+    // The script that emails each request. Until the hotel's inbox is set in book.php, or
+    // where PHP can't run (a local preview), the tool runs in preview mode: it works, but
+    // nothing is sent, and it says so.
+    endpoint: "book.php",
     // Shown to guests when a request cannot be sent.
     phone: "+232 90 417670",
   };
-  var MODE = BOOKING.emailKey ? "email" : "preview";
+  var MODE = "preview"; // becomes "email" once book.php reports it is set up
 
   var ROOMS = [
     { id: "deluxe", name: "Deluxe Single Room", size: "18 m²", sleeps: 2, beds: "1 Queen bed", rate: 85, art: { kind: "rings", tone: "indigo", seed: 3 }, photo: "assets/photos/room-deluxe.jpg" },
@@ -29,49 +31,63 @@
   ];
   var LIMITS = { adults: [1, 5], children: [0, 4], nightsMax: 60, monthsAhead: 18 };
 
-  // The one place a request leaves the browser: an email to reception.
+  // The one place a request leaves the browser. book.php emails it to reception and sends
+  // the guest a copy; the wording of both emails lives there.
   function submitBooking(booking) {
-    if (MODE !== "email" || booking.website) return Promise.resolve({ ok: true, ref: booking.ref }); // website = hidden field only bots fill
-    var ctrl = typeof AbortController === "function" ? new AbortController() : null;
-    var timer = ctrl ? setTimeout(function () {
-      ctrl.abort();
-    }, 20000) : 0;
-    return fetch("https://api.web3forms.com/submit", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify(emailFields(booking)),
-      signal: ctrl ? ctrl.signal : undefined,
-    })
-      .then(function (r) {
-        return r.json();
-      })
+    if (MODE !== "email") return Promise.resolve({ ok: true, preview: true });
+    if (booking.website) return Promise.resolve({ ok: true, guestEmailed: true }); // hidden field only bots fill
+    return post(booking, 20000).then(function (res) {
+      if (res.error === "not_configured") {
+        setMode("preview");
+        return { ok: true, preview: true };
+      }
+      if (!res.ok) {
+        var err = new Error(res.error || "not sent");
+        err.code = res.error || "";
+        throw err;
+      }
+      return res;
+    });
+  }
+
+  // Asks book.php whether the hotel's inbox is set; anything but a clear yes keeps preview
+  // mode (a local preview, a host without PHP, or no inbox yet). A dropped connection is
+  // asked again the next time the tool opens.
+  var checked = false;
+  function checkEndpoint() {
+    if (checked || !BOOKING.endpoint || !window.fetch) return;
+    checked = true;
+    post({ action: "status" }, 8000)
       .then(function (res) {
-        clearTimeout(timer);
-        if (!res || !res.success) throw new Error((res && res.message) || "not sent");
-        return res;
+        if (res.enabled === true) setMode("email");
+      })
+      .catch(function () {
+        checked = false;
       });
   }
 
-  // What reception sees in the email, in this order.
-  function emailFields(b) {
-    return {
-      access_key: BOOKING.emailKey,
-      subject: "Booking request " + b.ref + ": " + b.room.name + ", " + b.checkin + " to " + b.checkout,
-      from_name: "Africa Waka Waka website",
-      replyto: b.guest.email || undefined, // Reply goes straight to the guest
-      Reference: b.ref,
-      Room: b.room.name,
-      Arrival: fmt(fromIso(b.checkin), true),
-      Departure: fmt(fromIso(b.checkout), true),
-      Nights: b.nights,
-      Guests: plural(b.adults, "adult", "adults") + (b.children ? ", " + plural(b.children, "child", "children") : ""),
-      "Estimated total": money(b.estimatedTotal) + " (" + money(b.room.rate) + " a night)",
-      "Airport pickup": b.airportPickup ? "Yes" + (b.flight.number ? ", flight " + b.flight.number : "") + (b.flight.arrival ? ", landing " + b.flight.arrival : "") : "No",
-      Name: b.guest.name,
-      Phone: b.guest.phone || "-",
-      Email: b.guest.email || "-",
-      Notes: b.notes || "-",
-    };
+  function post(data, ms) {
+    var ctrl = typeof AbortController === "function" ? new AbortController() : null;
+    var timer = ctrl ? setTimeout(function () {
+      ctrl.abort();
+    }, ms) : 0;
+    return fetch(BOOKING.endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify(data),
+      credentials: "same-origin",
+      signal: ctrl ? ctrl.signal : undefined,
+    }).then(function (r) {
+      clearTimeout(timer);
+      return r.json().then(
+        function (body) {
+          return body && typeof body === "object" ? body : {};
+        },
+        function () {
+          return {};
+        }
+      );
+    });
   }
 
   /* ---------------------------------------------------------------- helpers */
@@ -153,6 +169,7 @@
     els.doneTitle = $("[data-done-title]", root);
     els.doneText = $("[data-done-text]", root);
     els.doneSummary = $("[data-done-summary]", root);
+    els.doneCallout = $("[data-done-callout]", root);
 
     root.addEventListener("click", function (e) {
       if (e.target.closest("[data-close]")) close();
@@ -198,7 +215,7 @@
     els.form.addEventListener("input", function (e) {
       var f = e.target.closest(".field");
       if (f) f.classList.remove("is-invalid");
-      if (e.target.name === "phone" || e.target.name === "email") els.note.classList.remove("is-error");
+      if (els.note.classList.contains("is-error")) note(defaultNote());
     });
 
     document.addEventListener("click", function (e) {
@@ -228,6 +245,7 @@
   /* ---------------------------------------------------------------- open / close */
   function open(opts) {
     opts = opts || {};
+    checkEndpoint();
     S.lastFocus = opts.trigger || document.activeElement;
     if (opts.checkin) {
       var ci = fromIso(opts.checkin);
@@ -296,7 +314,7 @@
   }
 
   /* ---------------------------------------------------------------- steps */
-  var TITLES = { 1: "When do you land?", 2: "Choose your room", 3: "Who’s staying?", 4: "Request received" };
+  var TITLES = { 1: "When do you land?", 2: "Choose your room", 3: "Who’s staying?", 4: "Request sent" };
 
   function go(n, silent) {
     n = Math.max(1, Math.min(4, n));
@@ -523,7 +541,7 @@
       label = "Your details";
       enabled = !!S.room;
     } else if (S.step === 3) {
-      label = S.busy ? "Sending…" : "Request booking";
+      label = S.busy ? "Sending…" : "Send request";
       enabled = !S.busy;
     }
     els.go.innerHTML = label + '<svg class="arrow" aria-hidden="true"><use href="#i-arrow"/></svg>';
@@ -552,14 +570,10 @@
       f.name.closest(".field").classList.add("is-invalid");
       ok = false;
     }
-    var emailOk = !email || /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
-    if (!emailOk) {
+    // The guest's copy of the request, and the hotel's reply, go to this address.
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
       f.email.closest(".field").classList.add("is-invalid");
-      ok = false;
-    }
-    if (!phone && !email) {
-      els.note.classList.add("is-error");
-      f.phone.closest(".field").classList.add("is-invalid");
+      note(email ? "That email address doesn’t look right. Please check it." : MODE === "email" ? "Please add your email, so we can send you a copy and confirm." : "Please add your email.", true);
       ok = false;
     }
     if (!ok) {
@@ -590,32 +604,48 @@
     S.busy = true;
     renderFoot();
     submitBooking(booking)
-      .then(function () {
+      .then(function (res) {
         S.busy = false;
-        showDone(booking, MODE);
+        showDone(booking, res.preview ? "preview" : "email", res.guestEmailed !== false);
       })
-      .catch(function () {
+      .catch(function (err) {
         S.busy = false;
         renderFoot();
-        els.note.textContent = "We couldn’t send that. Please try again, or call " + BOOKING.phone + ".";
-        els.note.classList.add("is-error");
+        if (err.code === "email") {
+          f.email.closest(".field").classList.add("is-invalid");
+          note("We couldn’t use that email address. Please check it.", true);
+        } else if (err.code === "rate_limited") {
+          note("You’ve sent several requests in a short time. Please call " + BOOKING.phone + " and we’ll help straight away.", true);
+        } else {
+          note("We couldn’t send that. Please try again, or call " + BOOKING.phone + ".", true);
+        }
       });
   }
 
-  function showDone(b, mode) {
+  // The line under the email field: what happens to the address, or what's wrong with it.
+  function defaultNote() {
+    return MODE === "email" ? "We’ll email you a copy of this request. Reception replies to that address to confirm." : "";
+  }
+  function note(text, isError) {
+    els.note.textContent = text;
+    els.note.hidden = !text;
+    els.note.classList.toggle("is-error", !!isError);
+  }
+
+  function showDone(b, mode, guestEmailed) {
     var first = b.guest.name.split(/\s+/)[0];
-    var contact = b.guest.phone || b.guest.email;
+    els.doneTitle.textContent = "Thank you, " + first + ".";
     if (mode === "preview") {
-      els.doneTitle.textContent = "Thank you, " + first + ".";
       els.doneText.textContent = "This booking tool is still a preview, so your request was not sent to the hotel. To book now, call " + BOOKING.phone + " and quote " + b.ref + ".";
     } else {
-      els.doneTitle.textContent = "Thank you, " + first + ".";
       els.doneText.textContent =
-        "Your request for the " + b.room.name + " is in. Our 24/7 reception will contact you on " + contact + " to confirm" +
-        (b.airportPickup ? ", and the shuttle will be waiting at arrivals." : ".");
+        "Your request for the " + b.room.name + " has gone to our reception. " +
+        (guestEmailed ? "A copy is on its way to " + b.guest.email + "." : "We couldn’t email you a copy, so please keep your reference.");
     }
+    if (els.doneCallout) els.doneCallout.hidden = mode === "preview";
     var rows = [
       ["Reference", b.ref, "ref"],
+      mode === "preview" ? null : ["Status", "Waiting for the hotel to confirm", "status"],
       ["Arrival", fmt(fromIso(b.checkin), true)],
       ["Departure", fmt(fromIso(b.checkout), true)],
       ["Guests", plural(b.adults, "adult", "adults") + (b.children ? ", " + plural(b.children, "child", "children") : "")],
@@ -624,12 +654,13 @@
       ["Airport pickup", b.airportPickup ? "Yes, free" + (b.flight.arrival ? " · " + b.flight.arrival : "") + (b.flight.number ? " · " + b.flight.number : "") : "No"],
     ];
     els.doneSummary.innerHTML = rows
+      .filter(Boolean)
       .map(function (r) {
         return '<div class="' + (r[2] || "") + '"><dt>' + r[0] + "</dt><dd>" + escapeHtml(r[1]) + "</dd></div>";
       })
       .join("");
     go(4);
-    els.title.textContent = mode === "preview" ? "Preview only" : "Request received";
+    els.title.textContent = mode === "preview" ? "Preview only" : "Request sent";
   }
 
   function escapeHtml(s) {
@@ -638,11 +669,22 @@
     });
   }
 
+  // Preview mode says up front that nothing will be sent; email mode says a request is not a
+  // confirmed booking.
+  function setMode(mode) {
+    MODE = mode;
+    window.AWWBooking.mode = mode;
+    applyMode();
+  }
+
+  // Null-safe: the firewall's cache can briefly pair this script with an older page.
   function applyMode() {
-    var n = $("[data-bk-preview]", root);
-    if (n) n.hidden = MODE !== "preview";
-    var paid = $("[data-done-note]", root);
-    if (paid && MODE === "preview") paid.hidden = true;
+    var preview = MODE === "preview";
+    [["[data-bk-preview]", !preview], ["[data-bk-request]", preview], ["[data-done-note]", preview]].forEach(function (p) {
+      var n = $(p[0], root);
+      if (n) n.hidden = p[1];
+    });
+    if (!els.note.classList.contains("is-error")) note(defaultNote());
   }
 
   window.AWWBooking = { open: open, close: close, ROOMS: ROOMS, submitBooking: submitBooking, mode: MODE };
