@@ -207,12 +207,14 @@
     var line;
     if (p < 0.405) line = "Alt " + Math.round(altitude(p)).toLocaleString("en-US") + " ft · final approach · rwy 12";
     else if (p < 0.52) line = "Wheels down · 22:41 GMT · welcome to Salone";
-    else if (p < 0.955) {
-      var left = Math.max(0, Math.round(480 * (1 - (p - 0.52) / (0.955 - 0.52))));
+    else if (p < 0.84) {
+      // eight minutes from the airport to the gate
+      var left = Math.max(0, Math.round(480 * (1 - (p - 0.52) / (0.84 - 0.52))));
       var mm = Math.floor(left / 60);
       var ss = left % 60;
       line = "Shuttle · 0" + mm + ":" + (ss < 10 ? "0" : "") + ss + " to Africa Waka Waka";
-    } else line = "Arrived · room ready · AC on";
+    } else if (p < 0.955) line = "Through the gate · pulling up at reception";
+    else line = "Arrived · room ready · AC on";
     if (line !== lastLine) {
       lastLine = line;
       hud.line.textContent = line;
