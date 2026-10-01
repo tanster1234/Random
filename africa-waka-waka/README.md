@@ -136,7 +136,7 @@ Builder plans don't: they can't host your own files.
 
 **First upload**
 
-1. Run `./package.sh`. It writes `dist/africa-waka-waka-site.zip` (about 460 KB) with only the
+1. Run `./package.sh`. It writes `dist/africa-waka-waka-site.zip` (about 7.7 MB, mostly photos and the dance video) with only the
    public files and the `.htaccess`.
 2. GoDaddy → My Products → Web Hosting → Manage → cPanel Admin → File Manager → `public_html`.
 3. If `public_html` already has files (an old site or a placeholder page), download a copy, then
