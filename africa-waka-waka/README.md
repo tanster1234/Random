@@ -151,11 +151,16 @@ Builder plans don't: they can't host your own files.
    paid SSL isn't needed. Once https:// shows a padlock, open `.htaccess` in File Manager
    (Settings → Show Hidden Files) and remove the `#` from the five lines it points out.
 
-**Updating later:** upload only the changed files over the old ones (for example photos into
-`assets/photos/`), or build the zip again and extract it over the top. Extracting the zip also
+**Updating later:** build the zip again and extract it over the top. Extracting the zip also
 replaces `.htaccess` and `book.php`, so redo any edits made to them on the server. The site sits
-behind GoDaddy's website firewall, which caches pages: clear its cache after an upload.
-Browsers themselves check for newer copies on every visit.
+behind GoDaddy's website firewall, which keeps copies of the files: clear its cache after an
+upload (Website Security → Firewall → Settings → Performance → Clear cache).
+
+The zip links each style sheet and script with a fingerprint of its contents
+(`css/site.css?v=9a747cd6`), so a changed file gets a new address and the firewall can't pair the
+new page with an old copy. That only works through the zip: a CSS or JS file uploaded on its
+own keeps the old address. Photos can be uploaded one at a time into `assets/photos/`, but one
+replaced under the same name needs the firewall cache cleared before it shows.
 
 `.htaccess` forwards the old WordPress addresses (`/contactus/`, `/trip/...`, `/refund-policy/`,
 `/chicken-bluff-gallery/`) to the matching sections, sets security headers, file types,
