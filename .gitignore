@@ -1,0 +1,2 @@
+# book.php logs booking requests one folder above the site; never commit guest details
+/booking-requests.csv
