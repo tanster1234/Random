@@ -23,6 +23,37 @@
     var t = clamp((x - a) / (b - a), 0, 1);
     return t * t * (3 - 2 * t);
   };
+  // monotone cubic through points (Fritsch-Carlson): smooth, never overshoots
+  function monotone(xs, ys) {
+    var n = xs.length;
+    var d = [];
+    var m = [];
+    var i;
+    for (i = 0; i < n - 1; i++) d.push((ys[i + 1] - ys[i]) / (xs[i + 1] - xs[i]));
+    m[0] = d[0];
+    m[n - 1] = d[n - 2];
+    for (i = 1; i < n - 1; i++) m[i] = d[i - 1] * d[i] <= 0 ? 0 : (d[i - 1] + d[i]) / 2;
+    for (i = 0; i < n - 1; i++) {
+      var a = m[i] / d[i];
+      var b = m[i + 1] / d[i];
+      var h = a * a + b * b;
+      if (h > 9) {
+        m[i] = (3 / Math.sqrt(h)) * a * d[i];
+        m[i + 1] = (3 / Math.sqrt(h)) * b * d[i];
+      }
+    }
+    return function (x) {
+      if (x <= xs[0]) return ys[0];
+      if (x >= xs[n - 1]) return ys[n - 1];
+      var k = 0;
+      while (x > xs[k + 1]) k++;
+      var w = xs[k + 1] - xs[k];
+      var t = (x - xs[k]) / w;
+      var t2 = t * t;
+      var t3 = t2 * t;
+      return (2 * t3 - 3 * t2 + 1) * ys[k] + (t3 - 2 * t2 + t) * w * m[k] + (-2 * t3 + 3 * t2) * ys[k + 1] + (t3 - t2) * w * m[k + 1];
+    };
+  }
   var $ = function (s, r) {
     return (r || document).querySelector(s);
   };
@@ -85,15 +116,28 @@
     num: $("[data-hud-num]"),
     name: $("[data-hud-name]"),
     bar: $("[data-hud-bar]"),
-    cue: $(".scroll-cue"),
     fade: $(".film-fade"),
   };
   var CH = [
     { at: 0, name: "Approach" },
     { at: 0.405, name: "Wheels down" },
     { at: 0.52, name: "Airport-Ferry Road" },
-    { at: 0.9, name: "Arrived" },
+    { at: 0.86, name: "Arrived" },
   ];
+  // Scroll position through the film (0-1) to story time (0-1). The landing keeps its pace,
+  // the drive (story 0.52-0.84) takes about a third less scrolling so the hotel comes up
+  // sooner, and the arrival gets the rest. Beats and HUD below are in story time.
+  var storyTime = monotone([0, 0.45, 0.575, 0.805, 1], [0, 0.407, 0.52, 0.84, 1]);
+  function scrollFor(t) {
+    var lo = 0;
+    var hi = 1;
+    for (var i = 0; i < 24; i++) {
+      var mid = (lo + hi) / 2;
+      if (storyTime(mid) < t) lo = mid;
+      else hi = mid;
+    }
+    return (lo + hi) / 2;
+  }
   var ALT = [
     [0, 2220],
     [0.2, 1160],
@@ -131,7 +175,7 @@
   }
   var lastLine = "";
   var lastCh = -1;
-  function updateOverlay(p) {
+  function updateOverlay(p, sp) {
     for (var i = 0; i < beats.length; i++) {
       var b = beats[i];
       var a = 0;
@@ -163,8 +207,8 @@
     var line;
     if (p < 0.405) line = "Alt " + Math.round(altitude(p)).toLocaleString("en-US") + " ft · final approach · rwy 12";
     else if (p < 0.52) line = "Wheels down · 22:41 GMT · welcome to Salone";
-    else if (p < 0.94) {
-      var left = Math.max(0, Math.round(480 * (1 - (p - 0.52) / (0.95 - 0.52))));
+    else if (p < 0.955) {
+      var left = Math.max(0, Math.round(480 * (1 - (p - 0.52) / (0.955 - 0.52))));
       var mm = Math.floor(left / 60);
       var ss = left % 60;
       line = "Shuttle · 0" + mm + ":" + (ss < 10 ? "0" : "") + ss + " to Africa Waka Waka";
@@ -173,9 +217,50 @@
       lastLine = line;
       hud.line.textContent = line;
     }
-    hud.bar.style.transform = "scaleX(" + p.toFixed(4) + ")";
-    hud.cue.style.opacity = (1 - smooth(0.004, 0.03, p)).toFixed(3);
+    hud.bar.style.transform = "scaleX(" + sp.toFixed(4) + ")";
     hud.fade.style.opacity = smooth(0.935, 1, p).toFixed(3);
+    var started = sp > 0.012;
+    filmEl.classList.toggle("is-started", started);
+    if (cue && !started) cue.dataset.mode = "start";
+  }
+
+  /* The scroll cue. At the top it says how to start, and a click plays the landing for anyone
+     who doesn't scroll. Further in, it comes back as "keep scrolling" whenever the film sits
+     still for a few seconds, and a click glides on to the next caption. */
+  var cue = $("[data-scroll-cue]");
+  var stillSince = 0;
+  var stillAt = -1;
+  function cueIdle(now, target) {
+    if (!cue) return;
+    if (Math.abs(target - stillAt) > 0.00002) {
+      stillAt = target;
+      stillSince = now;
+    }
+    var idle = target > 0.012 && target < 0.985 && now - stillSince > 3800;
+    // the wording only changes while the cue is hidden, never as it fades
+    if (idle && !filmEl.classList.contains("is-idle")) cue.dataset.mode = "more";
+    filmEl.classList.toggle("is-idle", idle);
+  }
+  function filmScrollTo(sp, duration) {
+    var span = filmEl.offsetHeight - window.innerHeight;
+    var y = filmEl.getBoundingClientRect().top + window.scrollY + sp * span;
+    if (lenis) lenis.scrollTo(y, { duration: duration, easing: function (x) { return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; } });
+    else window.scrollTo({ top: y, behavior: "smooth" });
+  }
+  if (cue) {
+    cue.addEventListener("click", function () {
+      stillSince = performance.now();
+      if (cur <= 0.012) {
+        // through the landing to just after touchdown
+        filmScrollTo(scrollFor(0.44), mobile ? 5 : 6);
+        return;
+      }
+      // on to the next caption at its fullest, or to the end of the film
+      var t = storyTime(cur);
+      var next = 1;
+      for (var i = 0; i < beats.length; i++) if (beats[i].p > t + 0.01 && beats[i].p < next) next = beats[i].p;
+      filmScrollTo(scrollFor(Math.min(next, 1)), 2.6);
+    });
   }
 
   function sizeFilm() {
@@ -196,7 +281,7 @@
     }
     sizeFilm();
     cur = filmTarget();
-    film.place(cur, performance.now() / 1000);
+    film.place(storyTime(cur), performance.now() / 1000);
     film.render();
     filmEl.classList.add("is-live");
     canvas.addEventListener("webglcontextlost", function (e) {
@@ -237,11 +322,14 @@
     var d = target - cur;
     var settled = Math.abs(d) < 0.00008;
     cur = settled ? target : cur + d * 0.12;
-    if (!still) updateOverlay(cur);
+    if (!still) {
+      updateOverlay(storyTime(cur), cur);
+      cueIdle(now, target);
+    }
     if (film && !document.documentElement.classList.contains("booking-lock")) {
       odd = !odd;
       if (!settled || odd) {
-        film.place(cur, now / 1000);
+        film.place(storyTime(cur), now / 1000);
         film.render();
         adapt(settled ? dt / 2 : dt);
       }
@@ -517,14 +605,14 @@
         });
       }
       cur = filmTarget();
-      if (!still) updateOverlay(cur);
+      if (!still) updateOverlay(storyTime(cur), cur);
       if (film) {
-        film.place(cur, performance.now() / 1000);
+        film.place(storyTime(cur), performance.now() / 1000);
         film.render();
       }
       setHeader();
     } else if (!still) {
-      updateOverlay(cur);
+      updateOverlay(storyTime(cur), cur);
     }
     requestAnimationFrame(function () {
       window.__ready = true;

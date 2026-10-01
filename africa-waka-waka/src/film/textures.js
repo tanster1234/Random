@@ -200,32 +200,34 @@ export function makePalmAtlas() {
 }
 
 /** The illuminated resort sign. */
+// The board on the main house's roof: the name, lit warm, with the place underneath.
+// 1440 x 200 matches the board's 8.8 m x 1.22 m.
 export function makeSignTexture(fontFamily) {
   const c = document.createElement("canvas");
-  c.width = 1024;
-  c.height = 256;
+  c.width = 1440;
+  c.height = 200;
   const g = c.getContext("2d");
   g.clearRect(0, 0, c.width, c.height);
   g.textAlign = "center";
   g.textBaseline = "middle";
   const text = "AFRICA WAKA WAKA";
-  let size = 96;
-  if ("letterSpacing" in g) g.letterSpacing = "6px";
+  let size = 120;
+  if ("letterSpacing" in g) g.letterSpacing = "10px";
   do {
     g.font = `600 ${size}px ${fontFamily}`;
     size -= 2;
-  } while (g.measureText(text).width > 900 && size > 40);
+  } while (g.measureText(text).width > 1300 && size > 40);
   g.shadowColor = "rgba(255, 206, 140, 0.95)";
-  g.shadowBlur = 34;
+  g.shadowBlur = 30;
   g.fillStyle = "rgba(255, 238, 210, 1)";
-  g.fillText(text, 512, 118);
-  g.shadowBlur = 10;
-  g.fillText(text, 512, 118);
+  g.fillText(text, 720, 82);
+  g.shadowBlur = 8;
+  g.fillText(text, 720, 82);
   g.shadowBlur = 0;
-  g.font = `600 28px ${fontFamily}`;
-  if ("letterSpacing" in g) g.letterSpacing = "14px";
+  g.font = `600 30px ${fontFamily}`;
+  if ("letterSpacing" in g) g.letterSpacing = "16px";
   g.fillStyle = "rgba(255, 214, 150, 0.9)";
-  g.fillText("LUNGI · SIERRA LEONE", 512, 206);
+  g.fillText("LUNGI · SIERRA LEONE", 720, 168);
   const t = new CanvasTexture(c);
   t.minFilter = LinearMipmapLinearFilter;
   t.magFilter = LinearFilter;

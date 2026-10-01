@@ -80,7 +80,11 @@ says so, with the phone number, so no visitor thinks they have booked.
 
 The film's source is in `src/film/`:
 
-- `world.js`: the layout (runway, road, resort, Freetown's hills and lights)
+- `world.js`: the layout (runway, road, Freetown's hills and lights, the resort's lamps, paths
+  and palms)
+- `resort.js`: the hotel's buildings, modelled on the photos: pink villas on brick plinths,
+  arched porches with cream columns and white balustrades, maroon hip roofs, the Chicken Bluff
+  pavilion by the pool
 - `index.js`: camera path, plane and shuttle
 - `shaders.js`: the look
 - `textures.js`: noise, palms and the lit sign
@@ -92,6 +96,16 @@ After editing, rebuild the bundle (needs Node 18+):
 ```
 
 The page itself doesn't need a build step; only the film does.
+
+**Pacing.** How far you scroll for each part of the film is set in two places. The `.film`
+height in `css/site.css` (515vh, 480vh on phones) is the whole length. `storyTime` in
+`js/main.js` shares it out: the landing takes the first 57.5% of the scroll, the drive the
+next 23%, the arrival the rest. Captions (`data-in`, `data-peak`, `data-out` on each `.beat`
+in `index.html`) and the HUD are timed in story time, so they move with it.
+
+**Scroll button.** At the top of the page a large "Scroll down to land" button (on phones
+"Swipe up to land") explains what to do; clicking it plays the landing. If a visitor stops
+mid-film for a few seconds, it comes back as "Keep scrolling" and moves on to the next caption.
 
 ## What's where
 

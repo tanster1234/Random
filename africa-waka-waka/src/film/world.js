@@ -1,6 +1,7 @@
 // World layout for "Wheels Down". Units are metres. y is up, the approach flies toward -z.
 // Lungi is on the near shore; Freetown's hills rise across the estuary to the east (+x).
 import { rng, makePath, smoothstep, clamp } from "./util.js";
+import { VILLAS, PAVILION, GATEHOUSE, PLINTH, WALL_H, SPRING } from "./resort.js";
 
 export const REGION = { x0: -1500, z0: -4500, size: 6000 }; // baked light/albedo maps
 
@@ -212,84 +213,106 @@ export function buildWorld(opts = {}) {
     P(x, z, 9, c, 0.5);
   }
 
-  /* the resort — compound opens off the right side of the road; the main house sits at the
-     far end, facing back down the road, so arriving guests see its lit front and sign */
+  /* the resort, modelled on the real one (geometry in resort.js): a crescent of single-storey
+     villas facing the gate, the Chicken Bluff pavilion beside the pool, paver paths with garden
+     lights. Porch lights under each veranda also light the villas in the BUILDINGS shader. */
   const { g, toWorld, rotY } = resortFrame();
-  const resort = { g, toWorld, rotY, blocks: [], palms: [], pool: null, sign: null };
+  const resort = { g, toWorld, rotY, palms: [], porch: [], pool: null, sign: null };
   const RW = (u, w) => toWorld(u, w);
-  const wall = (u0, w0, u1, w1) => resort.blocks.push({ u0, w0, u1, w1, h: 2.2, type: 3, win: 0, lit: 0 });
-  wall(-64, 9, -7, 9.5); // road side, with the gate gap
-  wall(7, 9, 64, 9.5);
-  wall(-64, 9, -63.5, 104); // near end
-  wall(63.5, 9, 64, 104); // far end
-  wall(-64, 103.5, 64, 104); // back
-  // main house: two storeys along the far end, front facing back down the road (-u)
-  resort.blocks.push({ u0: 40, w0: 18, u1: 55, w1: 96, h: 10.2, type: 2, win: 3, lit: 0.96, front: -1 });
-  // reception by the gate
-  resort.blocks.push({ u0: -34, w0: 16, u1: -16, w1: 32, h: 4.2, type: 2, win: 3, lit: 1.0 });
-  // Chicken Bluff: open pavilion beside the pool
-  resort.blocks.push({ u0: 12, w0: 66, u1: 30, w1: 84, h: 4.4, type: 4, win: 0, lit: 0, roofOnly: true, y0: 3.6 });
-  for (const [u, w] of [[13, 67], [29, 67], [13, 83], [29, 83]]) resort.blocks.push({ u0: u - 0.25, w0: w - 0.25, u1: u + 0.25, w1: w + 0.25, h: 3.6, type: 3, win: 0, lit: 0 });
-  // pool in the courtyard
-  resort.pool = { u: 4, w: 54, lu: 22, lw: 9 };
-
-  // gate lamps
-  for (const u of [-8, 8]) {
-    const [x, z] = RW(u, 8.6);
-    L(x, 3.0, z, WARM, 2.0);
-    P(x, z, 16, WARM, 1.0);
-  }
-  // driveway bollards from the gate to the house
-  for (let k = 0; k < 9; k++) {
-    const u = -2 + k * 4.6;
-    for (const w of [17, 27]) {
+  const PORCH = [1.0, 0.74, 0.44];
+  const GARDEN = [1.0, 0.86, 0.66];
+  const porch = (u, w, y, k) => {
+    const [x, z] = RW(u, w);
+    resort.porch.push([x, y, z, k]);
+  };
+  for (const [u0, u1, wf, vd, , arches, porchW] of VILLAS) {
+    const main = porchW === 0;
+    const uc = (u0 + u1) / 2;
+    const ye = PLINTH + WALL_H;
+    const lamp = (u, w, y, k, size, pool) => {
       const [x, z] = RW(u, w);
-      L(x, 0.8, z, WARM, 0.75);
-      P(x, z, 5, WARM, 0.6);
+      L(x, y, z, PORCH, size);
+      porch(u, w, y, k);
+      if (pool) {
+        const [gx, gz] = RW(u, pool[0]);
+        P(gx, gz, pool[1], PORCH, pool[2]);
+      }
+    };
+    if (main) {
+      // lamps in the veranda ceiling, and one on the face of every pier to light the arcade
+      for (let k = 0; k < 3; k++) lamp(u0 + ((k + 0.5) / 3) * (u1 - u0), wf + vd * 0.55, ye - 0.4, 2.0, 0.5, [wf - 1.2, 7, 0.7]);
+      for (let i = 0; i <= arches; i++) lamp(u0 + (i * (u1 - u0)) / arches, wf - 0.07, PLINTH + SPRING - 0.3, 0.75, 0.3, [wf - 1.6, 4, 0.35]);
+    } else {
+      // a lamp in the porch ceiling, and one on the house front each side of the porch
+      lamp(uc, wf + vd * 0.55, ye - 0.4, 1.9, 0.5, [wf - 1.2, 7, 0.7]);
+      for (const s of [-1, 1]) lamp(uc + s * (porchW / 2 + 1.6), wf + vd - 0.15, PLINTH + 2.35, 1.1, 0.34, [wf + vd - 1.6, 4, 0.4]);
     }
   }
-  // facade uplights along the front of the house
-  for (let w = 21; w <= 93; w += 8) {
-    const [x, z] = RW(39.4, w);
-    L(x, 0.5, z, [1.0, 0.82, 0.58], 0.9);
-    P(x, z, 8, [1.0, 0.8, 0.55], 0.8);
+  // gate posts with lamps
+  for (const u of [-7.1, 7.1]) {
+    const [x, z] = RW(u, 9.2);
+    L(x, 3.4, z, WARM, 1.6);
+    P(x, z, 12, WARM, 0.9);
+    porch(u, 8.4, 3.4, 1.4);
   }
-  // wall lamps
-  for (let u = -56; u <= 56; u += 14) {
+  // garden lights along the paths: gate to the main house, along the villa fronts, round the pool
+  const garden = (u, w) => {
+    const [x, z] = RW(u, w);
+    L(x, 0.5, z, GARDEN, 0.26);
+    P(x, z, 3.0, GARDEN, 0.5);
+  };
+  for (let w = 14; w <= 40; w += 6.5) for (const u of [-3.9, 3.9]) garden(u, w);
+  for (let u = -52; u <= 52; u += 6.5) if (Math.abs(u) > 5) garden(u, 43.6);
+  for (const [u, w] of [[9.6, 19], [9.6, 34], [29.4, 34], [29.4, 19], [19.5, 34.4]]) garden(u, w);
+  // wall lamps along the road
+  for (let u = -54; u <= 54; u += 13.5) {
     if (Math.abs(u) < 12) continue;
     const [x, z] = RW(u, 10.0);
-    L(x, 2.5, z, WARM, 0.9);
-    P(x, z, 7, WARM, 0.45);
+    L(x, 2.5, z, WARM, 0.8);
+    P(x, z, 6, WARM, 0.4);
   }
-  // pavilion pendants
-  for (const [u, w] of [[16, 70], [21, 70], [26, 70], [16, 75], [21, 75], [26, 75], [16, 80], [21, 80], [26, 80]]) {
-    const [x, z] = RW(u, w);
-    L(x, 3.1, z, [1.0, 0.72, 0.4], 0.85);
-  }
+  // Chicken Bluff: pendants under the pavilion roof
   {
-    const [x, z] = RW(21, 75);
-    P(x, z, 16, [1.0, 0.7, 0.4], 1.2);
-    const [px, pz] = RW(resort.pool.u, resort.pool.w);
-    P(px, pz, 20, POOL, 1.1);
-    L(px, 1.2, pz, POOL, 15, 0, 0, 2);
-    const [ex, ez] = RW(38, 56);
-    P(ex, ez, 22, [1.0, 0.85, 0.62], 1.2);
-    const [rx, rz] = RW(-25, 34);
-    P(rx, rz, 13, [1.0, 0.85, 0.62], 0.8);
+    const { u0, u1, w0, w1 } = PAVILION;
+    for (let i = 0; i < 3; i++) {
+      for (let j = 0; j < 2; j++) {
+        const u = u0 + ((i + 0.5) / 3) * (u1 - u0);
+        const w = w0 + ((j + 0.5) / 2) * (w1 - w0);
+        const [x, z] = RW(u, w);
+        L(x, 2.9, z, [1.0, 0.72, 0.4], 0.7);
+        if (j === 0) porch(u, w, 2.9, 1.5);
+      }
+    }
+    const [cx, cz] = RW((u0 + u1) / 2, (w0 + w1) / 2);
+    P(cx, cz, 14, [1.0, 0.7, 0.4], 1.1);
   }
-  // uplit palms
-  // kept clear of the sightline from the road to the sign
+  // pool in front of the pavilion, lit from below
+  resort.pool = { u: 19.5, w: 26.5, lu: 14, lw: 7 };
+  {
+    const [px, pz] = RW(resort.pool.u, resort.pool.w);
+    P(px, pz, 16, POOL, 1.0);
+    L(px, 0.4, pz, POOL, 2.2, 0, 0, 2);
+  }
+  // the gatehouse window
+  {
+    const [x, z] = RW((GATEHOUSE.u0 + GATEHOUSE.u1) / 2, GATEHOUSE.w0 - 1.5);
+    P(x, z, 5, PORCH, 0.6);
+  }
+  // uplit palms, placed clear of the view from the gate to the villas
   const palmSpots = [
-    [-10, 13], [10, 13], [-24, 34], [-40, 60], [-48, 86], [-56, 20], [52, 12], [58, 100], [0, 98], [-30, 98],
-    [22, 96], [34, 30], [34, 90], [-12, 72], [-2, 80], [18, 66], [8, 32], [-20, 78], [26, 28], [44, 104],
+    [9.8, 12.6], [-22, 12.5], [-53, 31], [-44, 38], [-54, 50], [54, 40], [54, 54], [48, 15],
+    [-33.5, 67], [-14, 65], [14, 65], [33.5, 67], [-44, 85], [-24, 87], [0, 89], [24, 87], [44, 85],
   ];
   palmSpots.forEach(([u, w], i) => {
-    const [x, z] = RW(u + (R() - 0.5) * 2, w + (R() - 0.5) * 2);
-    resort.palms.push({ x, z, h: 11 + R() * 7, idx: i % 4, flip: R() < 0.5 ? -1 : 1, up: 1.0, tint: [1.0, 0.72, 0.42] });
-    P(x, z, 5, [1.0, 0.72, 0.42], 0.9);
+    const [x, z] = RW(u + (R() - 0.5) * 1.5, w + (R() - 0.5) * 1.5);
+    resort.palms.push({ x, z, h: 10 + R() * 6, idx: i % 4, flip: R() < 0.5 ? -1 : 1, up: 1.0, tint: [1.0, 0.72, 0.42] });
+    P(x, z, 4, [1.0, 0.72, 0.42], 0.8);
   });
-  // sign on the front of the house, above the entrance
-  resort.sign = { u: 39.7, w: 57, y: 8.72, width: 12, height: 3.0 };
+  // the sign stands on the front of the main house's roof
+  {
+    const [u0, u1, wf] = VILLAS[2];
+    resort.sign = { u: (u0 + u1) / 2, w: wf - 0.66, y: PLINTH + WALL_H + 0.74, width: 8.8, height: 1.22 };
+  }
 
   /* roadside + village palms (silhouettes) */
   const palms = [];
@@ -398,12 +421,18 @@ export function bakeMaps(world, res) {
     a.closePath();
     a.fill();
   };
-  poly([[-64, 9], [64, 9], [64, 104], [-64, 104]], "rgb(38,50,32)"); // garden lawn
-  poly([[-7, 2], [7, 2], [7, 17], [-7, 17]], "rgb(92,82,70)"); // gate apron
-  poly([[-7, 17], [40, 17], [40, 27], [-7, 27]], "rgb(92,82,70)"); // driveway to the house
-  poly([[-12, 45], [20, 45], [20, 63], [-12, 63]], "rgb(124,112,96)"); // pool deck
-  poly([[33, 15], [40, 15], [40, 99], [33, 99]], "rgb(108,98,84)"); // front terrace
-  poly([[9, 63], [33, 63], [33, 87], [9, 87]], "rgb(100,86,72)"); // restaurant terrace
+  poly([[-58, 9], [58, 9], [58, 96], [-58, 96]], "rgb(30,48,26)"); // lawn
+  poly([[-6.6, 0], [6.6, 0], [6.6, 12], [-6.6, 12]], "rgb(122,112,98)"); // gate apron
+  const PAVER = "rgb(152,140,120)"; // beige pavers, as in the photos
+  poly([[-3.2, 12], [3.2, 12], [3.2, 50], [-3.2, 50]], PAVER); // drive from the gate to the main house
+  poly([[-8, 38], [8, 38], [8, 50], [-8, 50]], PAVER); // forecourt
+  poly([[-54, 44.4], [54, 44.4], [54, 48.2], [-54, 48.2]], PAVER); // along the villa fronts
+  for (const [u0, u1, wf] of VILLAS) {
+    const c = (u0 + u1) / 2;
+    poly([[c - 1.6, 48.2], [c + 1.6, 48.2], [c + 1.6, wf], [c - 1.6, wf]], PAVER);
+  }
+  poly([[3.2, 24], [10, 24], [10, 29], [3.2, 29]], PAVER); // to the pool
+  poly([[10, 18.5], [47, 18.5], [47, 34.5], [10, 34.5]], "rgb(116,120,124)"); // pool deck, grey tiles
   // houses footprints (dirt yards)
   a.fillStyle = "rgb(60,44,32)";
   for (const h of world.houses) {
@@ -434,4 +463,77 @@ export function bakeMaps(world, res) {
     l.fillRect(px - rad, pz - rad, rad * 2, rad * 2);
   }
   return { albedo: ac, light: lc };
+}
+
+/* ------------------------------------------------------------------ the garden, close up */
+// The regional maps hold about 3 m a pixel, too coarse for the last shot, which stands in the
+// garden. This bakes the compound at about 11 cm a pixel: what the ground is made of (r pavers,
+// g pool-deck slabs, b planting beds) and the light every lamp throws on it.
+export const YARD = { u0: -58, u1: 58, w0: 9, w1: 96 };
+
+export function bakeYard(world, mobile) {
+  const { g } = world.resort;
+  const W = mobile ? 512 : 1024;
+  const k = W / (YARD.u1 - YARD.u0); // pixels per metre
+  const H = Math.round((YARD.w1 - YARD.w0) * k);
+  const px = (u, w) => [(u - YARD.u0) * k, (w - YARD.w0) * k];
+  const canvas = () => {
+    const c = document.createElement("canvas");
+    c.width = W;
+    c.height = H;
+    const x = c.getContext("2d");
+    x.fillStyle = "#000";
+    x.fillRect(0, 0, W, H);
+    x.globalCompositeOperation = "lighter";
+    return [c, x];
+  };
+
+  const [mask, m] = canvas();
+  const rect = (u0, u1, w0, w1, col) => {
+    const [x0, y0] = px(u0, w0);
+    const [x1, y1] = px(u1, w1);
+    m.fillStyle = col;
+    m.fillRect(x0, y0, x1 - x0, y1 - y0);
+  };
+  const PAVER = "#f00";
+  const DECK = "#0f0";
+  const BED = "#00f";
+  rect(-3.2, 3.2, YARD.w0, 50, PAVER); // drive from the gate to the main house
+  rect(-8, 8, 38, 50, PAVER); // forecourt
+  rect(-54, 54, 44.4, 48.2, PAVER); // along the villa fronts
+  rect(3.2, 10, 24, 29, PAVER); // to the pool
+  rect(10, 47, 18.5, 34.5, DECK); // pool deck
+  for (const [u0, u1, wf, vd, , , porchW] of VILLAS) {
+    const uc = (u0 + u1) / 2;
+    rect(uc - 1.6, uc + 1.6, 48.2, wf, PAVER);
+    // planting along the front, either side of the steps
+    const pu0 = porchW ? uc - porchW / 2 : u0;
+    const pu1 = porchW ? uc + porchW / 2 : u1;
+    rect(pu0, uc - 1.6, wf - 1.0, wf, BED);
+    rect(uc + 1.6, pu1, wf - 1.0, wf, BED);
+    if (porchW) {
+      rect(u0, pu0, wf + vd - 1.0, wf + vd, BED);
+      rect(pu1, u1, wf + vd - 1.0, wf + vd, BED);
+    }
+  }
+
+  const [light, l] = canvas();
+  for (const [x, z, r, cr, cg, cb, kk] of world.pools) {
+    const dx = x - g.x;
+    const dz = z - g.z;
+    const u = dx * g.dx + dz * g.dz;
+    const w = dx * g.rx + dz * g.rz;
+    if (u + r < YARD.u0 || u - r > YARD.u1 || w + r < YARD.w0 || w - r > YARD.w1) continue;
+    const [cx, cy] = px(u, w);
+    const gr = l.createRadialGradient(cx, cy, 0, cx, cy, r * k);
+    const col = `${(cr * 255) | 0},${(cg * 255) | 0},${(cb * 255) | 0}`;
+    const a = Math.min(1, kk);
+    gr.addColorStop(0, `rgba(${col},${a})`);
+    gr.addColorStop(0.3, `rgba(${col},${a * 0.42})`);
+    gr.addColorStop(0.65, `rgba(${col},${a * 0.1})`);
+    gr.addColorStop(1, `rgba(${col},0)`);
+    l.fillStyle = gr;
+    l.fillRect(cx - r * k, cy - r * k, r * k * 2, r * k * 2);
+  }
+  return { mask, light };
 }

@@ -27,29 +27,41 @@ import {
   ClampToEdgeWrapping,
   MathUtils,
 } from "three";
-import { SKY, SURFACE, HILLS, BUILDINGS, PALMS, LIGHTS, POOL, SIGN, SOLID } from "./shaders.js";
+import { SKY, SURFACE, HILLS, BUILDINGS, PALMS, LIGHTS, POOL, SIGN, SOLID, YARD } from "./shaders.js";
 import { makeNoiseTexture, makeWaterNormals, makePalmAtlas, makeSignTexture } from "./textures.js";
-import { buildWorld, bakeMaps, REGION, CITY, MOON, RUNWAY, road, GATE_S, shoreX, hillHeight, HILLS_Z } from "./world.js";
-import { track, monotone, clamp, lerp, smoothstep } from "./util.js";
+import { buildWorld, bakeMaps, bakeYard, YARD as YARD_RECT, REGION, CITY, MOON, RUNWAY, road, GATE_S, shoreX, hillHeight, HILLS_Z } from "./world.js";
+import { buildResortGeometry } from "./resort.js";
+import { track, monotone, makePath, clamp, lerp, smoothstep } from "./util.js";
 
 /* ------------------------------------------------------------------ camera choreography */
-// [p, x, y, z]. Altitude and forward distance only ever decrease. The last two keys are
-// set relative to the resort once the world exists.
+// [p, x, y, z]. Altitude and forward distance only ever decrease. The keys after the drive are
+// set relative to the resort once the world exists. The drive runs from 0.52 to about 0.84;
+// the rest is the arrival: over the side wall and down into the garden, ending at eye level
+// on the lawn with the main house's arcade side-on, as in the photos.
 function cameraTracks(resort) {
-  const [ex, ez] = resort.toWorld(-172, -3);
-  const [tx, tz] = resort.toWorld(12, 17);
-  const [ax, az] = resort.toWorld(-560, -6);
-  const [bx, bz] = resort.toWorld(40, 40);
+  const at = (u, w) => resort.toWorld(u, w);
+  const [a1x, a1z] = at(-560, -6);
+  const [a2x, a2z] = at(-170, -6);
+  const [a3x, a3z] = at(-80, -1);
+  const [a4x, a4z] = at(-40, 21);
+  const [a5x, a5z] = at(-25, 28);
+  const [l1x, l1z] = at(40, 40);
+  const [l2x, l2z] = at(8, 44);
+  const [l3x, l3z] = at(5, 47);
+  const [l4x, l4z] = at(6, 51);
   const cam = track([
     [0.0, 0, 720, 13200],
     [0.2, 0, 430, 7000],
     [0.36, 20, 112, 1500],
     [0.415, 50, 62, -80],
     [0.47, 190, 56, -760],
-    [0.57, 620, 52, -1350],
-    [0.7, 1380, 46, -1760],
-    [0.84, ax, 38, az],
-    [1.0, ex, 26, ez],
+    [0.557, 620, 52, -1350],
+    [0.654, 1380, 46, -1760],
+    [0.758, a1x, 38, a1z],
+    [0.86, a2x, 21, a2z],
+    [0.925, a3x, 13, a3z],
+    [0.97, a4x, 6.4, a4z],
+    [1.0, a5x, 5.2, a5z],
   ]);
   const look = track([
     [0.0, 1700, -560, 1200],
@@ -57,10 +69,12 @@ function cameraTracks(resort) {
     [0.36, 40, -60, -1400],
     [0.415, 30, -12, -1100],
     [0.47, 380, -4, -1750],
-    [0.57, 1300, 0, -2050],
-    [0.7, 2300, 0, -2520],
-    [0.84, bx, 2, bz],
-    [1.0, tx, 4, tz],
+    [0.557, 1300, 0, -2050],
+    [0.654, 2300, 0, -2520],
+    [0.758, l1x, 2, l1z],
+    [0.86, l2x, 3, l2z],
+    [0.925, l3x, 3, l3z],
+    [1.0, l4x, 2.6, l4z],
   ]);
   return { cam, look };
 }
@@ -70,8 +84,9 @@ const TOUCH_Z = -350;
 const PLANE_Z = monotone([0, 0.2, 0.3, 0.36, 0.415, 0.47, 0.53, 0.6, 0.7, 1], [12500, 6300, 2350, 1060, TOUCH_Z, -1120, -1700, -2100, -2330, -2420]);
 const glide = (z) => (z - TOUCH_Z) * Math.tan((3 * Math.PI) / 180) + 3.4;
 
-// The shuttle leaves the curb and arrives at the gate.
-const SHUTTLE_S = monotone([0, 0.5, 0.58, 0.7, 0.84, 0.95, 1], [0, 0, 260, 1200, 2080, GATE_S, GATE_S]);
+// The shuttle leaves the curb, slows for the gate, then turns in and pulls up at the main house.
+const T_GATE = 0.84;
+const SHUTTLE_S = monotone([0, 0.5, 0.565, 0.654, 0.758, T_GATE, 1], [0, 0, 260, 1200, 2080, GATE_S - 12, GATE_S - 12]);
 
 export const CHAPTERS = [
   { at: 0.0, id: "approach" },
@@ -99,6 +114,7 @@ export function createFilm({ canvas, mobile = false, fontFamily = "Georgia, seri
   const signTex = makeSignTexture(fontFamily);
 
   const world = buildWorld({ mobile });
+  if (world.resort.porch.length > 32) console.warn("film: only the first 32 resort lamps light the buildings");
   const { cam: CAM, look: LOOK } = cameraTracks(world.resort);
   const res = mobile ? 1024 : 2048;
   const maps = bakeMaps(world, res);
@@ -138,6 +154,9 @@ export function createFilm({ canvas, mobile = false, fontFamily = "Georgia, seri
     uSpotCol: { value: [new Vector3(), new Vector3()] },
     uSpotCone: { value: [new Vector2(0.97, 0.995), new Vector2(0.9, 0.97)] },
     uSpotRange: { value: [900, 90] },
+    // the BUILDINGS shader takes 32 of these; more would be dropped
+    uPorch: { value: Array.from({ length: 32 }, (_, i) => new Vector4(...(world.resort.porch[i] || [0, -100, 0, 0]))) },
+    uPorchCol: { value: new Vector3(1.0, 0.72, 0.42) },
   };
 
   const mat = (def, extra = {}, opts = {}) =>
@@ -157,7 +176,16 @@ export function createFilm({ canvas, mobile = false, fontFamily = "Georgia, seri
   /* water + land */
   const surfGeo = new PlaneGeometry(100000, 100000, 1, 1);
   surfGeo.rotateX(-Math.PI / 2);
-  const surface = new Mesh(surfGeo, mat(SURFACE, { uWaterN: { value: waterN }, uAlbedo: { value: albedoTex } }));
+  const rg0 = world.resort.g;
+  const surface = new Mesh(
+    surfGeo,
+    mat(SURFACE, {
+      uWaterN: { value: waterN },
+      uAlbedo: { value: albedoTex },
+      uYardO: { value: new Vector4(rg0.x, rg0.z, rg0.dx, rg0.dz) },
+      uYardR: { value: new Vector4(YARD_RECT.u0, YARD_RECT.u1, YARD_RECT.w0, YARD_RECT.w1) },
+    })
+  );
   surface.position.set(4000, 0, -2000);
   surface.frustumCulled = false;
   scene.add(surface);
@@ -250,15 +278,6 @@ export function createFilm({ canvas, mobile = false, fontFamily = "Georgia, seri
     box(585, -1600, 0, 58, 508, 1.2, 14, [0.11, 0, 1, 0], true);
     // houses and shops along the road
     world.houses.forEach((h, i) => box(h.x, h.z, h.rot, h.w, h.d, h.h, 0, [i * 0.137, h.lit, 0, 1]));
-    // the resort
-    const r = world.resort;
-    const rot = Math.atan2(-r.g.dz, r.g.dx);
-    r.blocks.forEach((b, i) => {
-      const uc = (b.u0 + b.u1) / 2;
-      const wc = (b.w0 + b.w1) / 2;
-      const [x, z] = r.toWorld(uc, wc);
-      box(x, z, rot, b.u1 - b.u0, b.w1 - b.w0, b.roofOnly ? b.h - (b.y0 || 0) : b.h, b.y0 || 0, [0.5 + i * 0.07, b.lit, b.type, b.win], !!b.roofOnly);
-    });
     const g = new BufferGeometry();
     g.setAttribute("position", new Float32BufferAttribute(P, 3));
     g.setAttribute("normal", new Float32BufferAttribute(N, 3));
@@ -269,9 +288,58 @@ export function createFilm({ canvas, mobile = false, fontFamily = "Georgia, seri
     scene.add(m);
   }
 
+  /* the resort: villas, pavilion, gatehouse and walls (resort.js) */
+  {
+    const rg = buildResortGeometry(world.resort);
+    const g = new BufferGeometry();
+    g.setAttribute("position", new Float32BufferAttribute(rg.position, 3));
+    g.setAttribute("normal", new Float32BufferAttribute(rg.normal, 3));
+    g.setAttribute("fc", new Float32BufferAttribute(rg.fc, 2));
+    g.setAttribute("bdata", new Float32BufferAttribute(rg.bdata, 4));
+    const m = new Mesh(g, mat(BUILDINGS, {}, { side: DoubleSide }));
+    m.frustumCulled = false;
+    scene.add(m);
+  }
+
   /* pool + sign */
   const r = world.resort;
   const resortRot = Math.atan2(-r.g.dz, r.g.dx);
+
+  /* the garden, in detail for the last shot (world.js bakeYard) */
+  {
+    const yard = bakeYard(world, mobile);
+    const tex = (c) => {
+      const t = new CanvasTexture(c);
+      t.flipY = false;
+      t.wrapS = t.wrapT = ClampToEdgeWrapping;
+      t.minFilter = LinearMipmapLinearFilter;
+      t.magFilter = LinearFilter;
+      t.anisotropy = 8;
+      return t;
+    };
+    const { u0, u1, w0, w1 } = YARD_RECT;
+    const corners = [[u0, w0], [u1, w0], [u1, w1], [u0, w1]];
+    const pos = [];
+    const uv = [];
+    const lp = [];
+    for (const i of [0, 1, 2, 0, 2, 3]) {
+      const [u, w] = corners[i];
+      const [x, z] = r.toWorld(u, w);
+      pos.push(x, 0.05, z);
+      uv.push((u - u0) / (u1 - u0), (w - w0) / (w1 - w0));
+      lp.push(u, w);
+    }
+    const yg = new BufferGeometry();
+    yg.setAttribute("position", new Float32BufferAttribute(pos, 3));
+    yg.setAttribute("uv", new Float32BufferAttribute(uv, 2));
+    yg.setAttribute("lp", new Float32BufferAttribute(lp, 2));
+    const ym = new Mesh(
+      yg,
+      mat(YARD, { uYardMask: { value: tex(yard.mask) }, uYardLight: { value: tex(yard.light) } }, { side: DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -4 })
+    );
+    ym.frustumCulled = false;
+    scene.add(ym);
+  }
   {
     const pg = new PlaneGeometry(r.pool.lu, r.pool.lw);
     pg.rotateX(-Math.PI / 2);
@@ -293,10 +361,10 @@ export function createFilm({ canvas, mobile = false, fontFamily = "Georgia, seri
         depthWrite: false,
       })
     );
-    const [sx, sz] = r.toWorld(r.sign.u - 0.35, r.sign.w);
+    const [sx, sz] = r.toWorld(r.sign.u, r.sign.w);
     sign.position.set(sx, r.sign.y, sz);
-    // the house faces back down the road: plane normal (+z local) points along -u
-    sign.rotation.y = Math.atan2(-r.g.dx, -r.g.dz);
+    // the villas face the gate: plane normal (+z local) points along -w
+    sign.rotation.y = Math.atan2(-r.g.rx, -r.g.rz);
     sign.renderOrder = 12;
     sign.name = "sign";
     scene.add(sign);
@@ -398,12 +466,34 @@ export function createFilm({ canvas, mobile = false, fontFamily = "Georgia, seri
   }
   scene.add(plane);
 
-  /* the shuttle */
+  /* the shuttle, and its way in from the road to the main house */
+  const inner = makePath(
+    [[-12, 2.4], [-5, 2.6], [-1.4, 5.4], [0, 10], [0, 22], [0, 34], [0, 42.5]].map(([u, w]) => world.resort.toWorld(u, w)),
+    12
+  );
+  const INNER_S = monotone([T_GATE, 0.955, 1], [0, inner.total, inner.total]);
+  // a white minibus: body, a band of dark glass all round, wheels; front is local -z
   const shuttle = new Group();
   {
-    const b = new Mesh(new BoxGeometry(2.1, 2.2, 5.2), solidMat(0xe9e4da));
-    b.position.y = 1.35;
-    shuttle.add(b);
+    const body = new Mesh(new BoxGeometry(2.0, 1.95, 5.3), solidMat(0xe9e4da));
+    body.position.y = 1.3;
+    shuttle.add(body);
+    const glass = new Mesh(new BoxGeometry(2.04, 0.62, 5.0), solidMat(0x15181d));
+    glass.position.set(0, 1.86, 0.05);
+    shuttle.add(glass);
+    const shield = new Mesh(new BoxGeometry(1.86, 0.7, 0.1), solidMat(0x15181d));
+    shield.position.set(0, 1.8, -2.62);
+    shield.rotation.x = 0.18;
+    shuttle.add(shield);
+    const tyre = solidMat(0x0b0b0c);
+    for (const x of [-0.92, 0.92]) {
+      for (const z of [-1.75, 1.75]) {
+        const wh = new Mesh(new CylinderGeometry(0.36, 0.36, 0.26, 14), tyre);
+        wh.rotation.z = Math.PI / 2;
+        wh.position.set(x, 0.36, z);
+        shuttle.add(wh);
+      }
+    }
   }
   scene.add(shuttle);
 
@@ -461,10 +551,13 @@ export function createFilm({ canvas, mobile = false, fontFamily = "Georgia, seri
     // narrow screens: lean the frame toward the story
     const aspect = width / height;
     if (aspect < 1.1) {
-      // hero leans toward Freetown and the moon, the landing stays centred, the arrival
-      // centres the resort
-      const lean = (1.1 - aspect) * (0.2 * (1 - smoothstep(0.06, 0.2, p)) + 0.25 * smoothstep(0.62, 0.92, p));
+      // hero leans toward Freetown and the moon, the landing stays centred, the drive keeps
+      // the resort in view, and the last shot is already centred on the main house
+      const end = smoothstep(0.93, 1, p);
+      const lean = (1.1 - aspect) * (0.2 * (1 - smoothstep(0.06, 0.2, p)) + 0.25 * smoothstep(0.62, 0.86, p) * (1 - end) + 0.08 * end);
       camera.rotateY(-lean);
+      // and tips down at the end, lifting the house clear of the words at the foot of the screen
+      camera.rotateX(-(1.1 - aspect) * 0.34 * end);
     }
     sky.position.copy(camera.position);
 
@@ -499,10 +592,12 @@ export function createFilm({ canvas, mobile = false, fontFamily = "Georgia, seri
     U.uSpotCol.value[0].set(1.0, 0.95, 0.86).multiplyScalar(70 * landing);
 
     // the shuttle
-    const s = SHUTTLE_S(p);
-    const rp = road.at(s);
-    const arrived = s >= GATE_S - 1;
-    shuttle.position.set(rp.x + rp.rx * 2.4, 0, rp.z + rp.rz * 2.4);
+    let rp;
+    if (p <= T_GATE) {
+      const q = road.at(SHUTTLE_S(p));
+      rp = { x: q.x + q.rx * 2.4, z: q.z + q.rz * 2.4, dx: q.dx, dz: q.dz, rx: q.rx, rz: q.rz };
+    } else rp = inner.at(INNER_S(p));
+    shuttle.position.set(rp.x, 0, rp.z);
     shuttle.rotation.y = Math.atan2(-rp.dx, -rp.dz);
     shuttle.visible = p > 0.45;
     const sv = shuttle.visible ? 1 : 0;
@@ -512,14 +607,18 @@ export function createFilm({ canvas, mobile = false, fontFamily = "Georgia, seri
     const rz = rp.rz;
     const sxp = shuttle.position.x;
     const szp = shuttle.position.z;
-    setDyn(7, tmp.set(sxp + fx * 2.7 - rx * 0.75, 0.85, szp + fz * 2.7 - rz * 0.75), [1, 0.95, 0.85], 1.6 * sv);
-    setDyn(8, tmp.set(sxp + fx * 2.7 + rx * 0.75, 0.85, szp + fz * 2.7 + rz * 0.75), [1, 0.95, 0.85], 1.6 * sv);
-    const brake = arrived ? 1.6 : 1.0;
+    // once parked, the headlights drop to sidelights; inside the walls they reach less far, as
+    // the buildings would shadow them
+    const head = sv * (1 - 0.85 * smoothstep(0.962, 0.99, p));
+    setDyn(7, tmp.set(sxp + fx * 2.7 - rx * 0.75, 0.85, szp + fz * 2.7 - rz * 0.75), [1, 0.95, 0.85], 1.6 * Math.max(head, 0.35 * sv));
+    setDyn(8, tmp.set(sxp + fx * 2.7 + rx * 0.75, 0.85, szp + fz * 2.7 + rz * 0.75), [1, 0.95, 0.85], 1.6 * Math.max(head, 0.35 * sv));
+    const brake = p > 0.93 && p < 0.975 ? 1.6 : 1.0;
     setDyn(9, tmp.set(sxp - fx * 2.65 - rx * 0.8, 1.0, szp - fz * 2.65 - rz * 0.8), [1, 0.08, 0.05], 0.9 * brake * sv);
     setDyn(10, tmp.set(sxp - fx * 2.65 + rx * 0.8, 1.0, szp - fz * 2.65 + rz * 0.8), [1, 0.08, 0.05], 0.9 * brake * sv);
     U.uSpotPos.value[1].set(sxp + fx * 2.8, 1.0, szp + fz * 2.8);
     U.uSpotDir.value[1].set(fx, -0.12, fz).normalize();
-    U.uSpotCol.value[1].set(1.0, 0.93, 0.8).multiplyScalar(9 * sv);
+    U.uSpotCol.value[1].set(1.0, 0.93, 0.8).multiplyScalar(9 * head);
+    U.uSpotRange.value[1] = lerp(90, 26, smoothstep(T_GATE, T_GATE + 0.03, p));
 
     dynPos.needsUpdate = true;
     dynCol.needsUpdate = true;
