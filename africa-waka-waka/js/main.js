@@ -403,6 +403,55 @@
       });
   }
 
+  /* ------------------------------------------------------------ dance clip */
+  // Plays muted while it is on screen, like a moving photo, and the button brings in the
+  // drums. With reduced motion or data saver on, nothing plays until the button is pressed.
+  // Without this script the video keeps its native controls.
+  function initDance() {
+    var fig = $("[data-dance]");
+    if (!fig) return;
+    var clip = fig.querySelector("video");
+    var btn = fig.querySelector("[data-dance-sound]");
+    var text = btn.querySelector("span");
+    var saveData = !!(navigator.connection && navigator.connection.saveData);
+    var started = !reduce && !saveData && "IntersectionObserver" in window;
+    clip.removeAttribute("controls");
+    btn.hidden = false;
+    var render = function () {
+      var state = clip.paused && !started ? "play" : clip.muted ? "muted" : "sound";
+      btn.setAttribute("data-state", state);
+      text.textContent = state === "play" ? "Play with sound" : state === "muted" ? "Sound on" : "Sound off";
+    };
+    var play = function () {
+      var p = clip.play();
+      if (p && p.catch) p.catch(function () {});
+    };
+    btn.addEventListener("click", function () {
+      if (clip.paused) {
+        started = true;
+        clip.muted = false;
+        play();
+      } else {
+        clip.muted = !clip.muted;
+      }
+      render();
+    });
+    ["play", "pause", "volumechange"].forEach(function (ev) {
+      clip.addEventListener(ev, render);
+    });
+    if ("IntersectionObserver" in window) {
+      new IntersectionObserver(
+        function (es) {
+          if (es[0].isIntersecting && started) play();
+          else if (!es[0].isIntersecting) clip.pause();
+        },
+        { threshold: 0.35 }
+      ).observe(fig);
+    }
+    render();
+  }
+  initDance();
+
   /* ------------------------------------------------------------ quick book */
   var qb = $("[data-quick-book]");
   if (qb) {

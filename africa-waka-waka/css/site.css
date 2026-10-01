@@ -703,6 +703,35 @@ body.menu-open .site-header::before {
   margin-top: 18px;
   color: rgba(246, 240, 230, 0.74);
 }
+.welcome-photo {
+  position: relative;
+  margin: clamp(48px, 7vw, 96px) 0 0;
+  aspect-ratio: 2 / 1;
+  border-radius: 24px;
+  overflow: hidden;
+  background: var(--indigo);
+  box-shadow: 0 50px 90px -50px rgba(0, 0, 0, 0.9);
+}
+.welcome-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 58%;
+}
+.welcome-photo figcaption {
+  position: absolute;
+  left: 18px;
+  bottom: 16px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(12, 16, 30, 0.55);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  color: var(--cotton);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
 .facts {
   list-style: none;
   padding: 0;
@@ -964,6 +993,9 @@ body.menu-open .site-header::before {
   background: linear-gradient(to top, rgba(8, 12, 26, 0.82) 0%, rgba(8, 12, 26, 0.2) 55%, rgba(8, 12, 26, 0) 80%);
   pointer-events: none;
 }
+.tile--hero > img {
+  object-position: 62% 50%;
+}
 .tile-text {
   position: relative;
   z-index: 1;
@@ -1086,6 +1118,101 @@ body.menu-open .site-header::before {
   .times > div + div {
     padding-left: 0;
     border-left: 0;
+  }
+}
+
+/* ---------- Culture: the dance clip ---------- */
+.culture {
+  background:
+    radial-gradient(70% 60% at 10% 100%, rgba(180, 80, 43, 0.3), transparent 70%),
+    var(--night);
+}
+.culture-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  gap: clamp(32px, 6vw, 96px);
+  align-items: center;
+}
+.culture-copy .lede {
+  margin-top: clamp(22px, 2.6vw, 36px);
+}
+.culture-copy p + p {
+  margin-top: 18px;
+  color: rgba(246, 240, 230, 0.74);
+}
+.dance {
+  margin: 0;
+  justify-self: center;
+  width: min(100%, 400px, calc(76vh * 9 / 16));
+}
+.dance-frame {
+  position: relative;
+  aspect-ratio: 9 / 16;
+  border-radius: 28px;
+  overflow: hidden;
+  background: var(--indigo);
+  box-shadow: 0 50px 90px -45px rgba(0, 0, 0, 0.9);
+}
+.dance video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.dance-sound {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px 10px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(12, 16, 30, 0.62);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  color: var(--cotton);
+  font: 700 14px/1 var(--f-body);
+  cursor: pointer;
+}
+.dance-sound:hover {
+  background: rgba(12, 16, 30, 0.82);
+}
+.dance-sound:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+}
+.dance-sound svg {
+  display: none;
+  width: 20px;
+  height: 20px;
+}
+.dance-sound[data-state="play"] .ic-play,
+.dance-sound[data-state="muted"] .ic-sound,
+.dance-sound[data-state="sound"] .ic-mute {
+  display: block;
+}
+.dance figcaption {
+  margin-top: 14px;
+  font-size: 13px;
+  text-align: center;
+  color: rgba(246, 240, 230, 0.6);
+}
+@media (max-width: 860px) {
+  .culture-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dance {
+    width: min(100%, 360px);
+  }
+}
+@media (max-width: 720px) {
+  .welcome-photo {
+    aspect-ratio: 4 / 3;
+    border-radius: 18px;
   }
 }
 
@@ -1304,12 +1431,22 @@ body.menu-open .site-header::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(12, 18, 40, 0.94) 0%, rgba(12, 18, 40, 0.72) 42%, rgba(12, 18, 40, 0.1) 78%);
+  background:
+    linear-gradient(to bottom, rgba(12, 18, 40, 0.55) 0%, rgba(12, 18, 40, 0) 28%),
+    linear-gradient(to top, rgba(12, 18, 40, 0.94) 0%, rgba(12, 18, 40, 0.72) 42%, rgba(12, 18, 40, 0.1) 78%);
   pointer-events: none;
 }
 .day > *:not(.gara-canvas) {
   position: relative;
   z-index: 1;
+}
+.day > img.day-photo {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 .day-num {
   position: absolute !important;
@@ -1514,8 +1651,11 @@ body.menu-open .site-header::before {
 }
 .story-band {
   margin-top: clamp(64px, 9vw, 120px);
-  height: clamp(120px, 16vw, 200px);
+  height: clamp(240px, 38vw, 620px);
   margin-inline: calc(-1 * var(--gutter));
+}
+.story-band > img {
+  object-position: 50% 58%;
 }
 @media (max-width: 860px) {
   .story-grid,

@@ -27,20 +27,29 @@ Handy URL flags: `?still` shows the page without the film (the reduced-motion ve
 The booking tool needs PHP to send anything, so with the servers above it runs in preview mode.
 `php -S localhost:8080` serves the site with `book.php` working.
 
-## Add real photos (recommended)
+## Photos and the dance video
 
-Drop JPGs into `assets/photos/` with these names. Each one replaces the tie-dye art in its
-slot automatically; no code changes are needed.
+The hotel's own photos, a few landscapes from its travel-package gallery and the dance clip live
+in `assets/photos/` and `assets/video/`. To swap a photo, upload a new file with the same name.
+A slot whose file is missing shows tie-dye art instead (the browser logs a harmless 404).
 
 | File | Where it shows |
 |---|---|
+| `resort.jpg` | Welcome section, under the headline |
 | `room-deluxe.jpg` | Deluxe Single Room card and booking tool |
-| `room-balcony.jpg` | Deluxe Single Room · Balcony, Pool View |
-| `room-suite.jpg` | Executive Suite · Resort View |
+| `room-balcony.jpg` | Deluxe Single Room · Balcony, Pool View card and booking tool |
+| `room-suite.jpg` | Executive Suite (no photo yet, so it shows tie-dye art) |
 | `pool.jpg` | "Swimming pool with a view" tile |
+| `lobby.jpg` | Wide band at the end of "Our story" |
+| `day-1.jpg` … `day-7.jpg` | Itinerary cards, Day 1 to Day 7 |
+| `share.jpg` | The preview when the link is shared (1200 × 630) |
+| `../video/dance.mp4`, `dance.webm`, `dance-poster.jpg` | "Drums on the courtyard" section |
 
-Landscape photos around 1600px wide, saved at about 80% JPEG quality, work well.
-Until a file exists, the browser logs a harmless 404 for it. On the live site, upload them to
+Room photos are 6:5 landscape (about 1080 × 900) and day photos 4:5 portrait (880 × 1100); the
+others are 1280 to 2000 px wide. All are JPEGs at about 80% quality with camera and location data
+removed. The dance clip is 7.7 seconds at 720 × 1280: an H.264 MP4 that most browsers play and a
+WebM copy for the rest. It plays silently while it's on screen, and the button turns the sound on.
+With reduced motion or data saver on, it waits for the button. On the live site, upload photos to
 `public_html/assets/photos/` in cPanel's File Manager.
 
 ## Set room rates
