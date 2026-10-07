@@ -61,7 +61,7 @@
 .brand-logo {
   display: block;
   width: auto;
-  height: 58px;
+  height: 62px;
   border-radius: 8px;
   box-shadow:
     0 0 0 1px rgba(255, 255, 255, 0.12),
@@ -236,7 +236,7 @@ body.menu-open .site-header::before {
     gap: 10px;
   }
   .brand-logo {
-    height: 46px;
+    height: 50px;
     border-radius: 7px;
   }
   .header-cta .btn--sm {
@@ -247,7 +247,7 @@ body.menu-open .site-header::before {
 }
 @media (max-width: 380px) {
   .brand-logo {
-    height: 42px;
+    height: 46px;
   }
 }
 
@@ -374,20 +374,22 @@ body.menu-open .site-header::before {
   translate: 0 -50%;
   width: min(1040px, calc(100vw - 2 * var(--gutter)));
 }
-.beat--hero .d-xxl {
-  font-size: clamp(56px, 9.6vw, 172px);
-}
 .beat--hero .lede {
   max-width: 30em;
 }
 .beat--hero .kicker {
   margin-bottom: 18px;
 }
-.hero-word .hw-line {
-  display: inline-block;
+/* the hotel's logo in place of a title, its lettering lifted off the slate background */
+.hero-logo {
+  margin: 0;
+  line-height: 0;
 }
-.hero-word em {
-  font-weight: 350;
+.hero-logo img {
+  display: block;
+  width: clamp(250px, 31vw, 470px);
+  height: auto;
+  filter: drop-shadow(0 6px 28px rgba(0, 0, 0, 0.45));
 }
 .beat--final {
   bottom: clamp(110px, 16vh, 190px);

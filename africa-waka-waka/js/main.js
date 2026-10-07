@@ -274,7 +274,7 @@
   function createFilm() {
     if (still || film) return;
     try {
-      film = window.WakaFilm.createFilm({ canvas: canvas, mobile: mobile, fontFamily: '"Fraunces", Georgia, serif' });
+      film = window.WakaFilm.createFilm({ canvas: canvas, mobile: mobile, fontFamily: '"Fraunces", Georgia, serif', signLogo: "assets/logo-hero.png" });
     } catch (e) {
       console.warn("Film unavailable, showing the still.", e);
       still = true;

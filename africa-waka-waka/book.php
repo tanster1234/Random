@@ -326,7 +326,7 @@ function page($title, $body)
         . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f6f0e6;"><tr><td align="center" style="padding:28px 14px;">'
         . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#fbf8f2;border:1px solid #e6ddd0;border-radius:16px;">'
         . '<tr><td style="padding:28px 26px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.55;color:#1b1612;">'
-        . '<p style="margin:0 0 12px;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;font-weight:bold;color:#b4502b;">' . HOTEL_NAME . '</p>'
+        . '<img src="' . SITE_URL . '/assets/logo.jpg" width="120" height="90" alt="' . HOTEL_NAME . '" style="display:block;width:120px;height:90px;margin:0 0 18px;border:0;border-radius:10px;">'
         . '<h1 style="margin:0 0 18px;font-family:Georgia,\'Times New Roman\',serif;font-size:26px;line-height:1.25;font-weight:normal;color:#1b1612;">' . h($title) . '</h1>'
         . $body
         . '</td></tr></table>'

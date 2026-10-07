@@ -13,7 +13,7 @@ A night arrival shot in one continuous camera move (three.js), then the content.
 Vector: *the camera only ever moves forward and down.* No reversals.
 Chapters (scroll progress p):
 1. 0.00 Approach: high over the estuary at night. Freetown's lights on the hills across the
-   water (right), moon on the water, Lungi's runway lights far ahead. Hero wordmark.
+   water (right), moon on the water, Lungi's runway lights far ahead. Hero: the hotel's logo (originally a type wordmark, replaced by the owner's logo in October 2026).
 2. ~0.30 Wheels down: approach strobes run toward the runway, the plane ahead lands, landing
    lights wash the runway.
 3. ~0.55 Airport-Ferry Road: shuttle headlights leave the terminal; streetlights, palms,

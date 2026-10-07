@@ -28,7 +28,7 @@ import {
   MathUtils,
 } from "three";
 import { SKY, SURFACE, HILLS, BUILDINGS, PALMS, LIGHTS, POOL, SIGN, SOLID, YARD } from "./shaders.js";
-import { makeNoiseTexture, makeWaterNormals, makePalmAtlas, makeSignTexture } from "./textures.js";
+import { makeNoiseTexture, makeWaterNormals, makePalmAtlas, makeSignTexture, drawSignLogo } from "./textures.js";
 import { buildWorld, bakeMaps, bakeYard, YARD as YARD_RECT, REGION, CITY, MOON, RUNWAY, road, GATE_S, shoreX, hillHeight, HILLS_Z } from "./world.js";
 import { buildResortGeometry } from "./resort.js";
 import { track, monotone, makePath, clamp, lerp, smoothstep } from "./util.js";
@@ -95,7 +95,7 @@ export const CHAPTERS = [
   { at: 0.86, id: "arrived" },
 ];
 
-export function createFilm({ canvas, mobile = false, fontFamily = "Georgia, serif" }) {
+export function createFilm({ canvas, mobile = false, fontFamily = "Georgia, serif", signLogo = null }) {
   const renderer = new WebGLRenderer({ canvas, antialias: false, alpha: false, powerPreference: "high-performance", stencil: false });
   renderer.setClearColor(0x05080f, 1);
   renderer.autoClear = true;
@@ -368,6 +368,16 @@ export function createFilm({ canvas, mobile = false, fontFamily = "Georgia, seri
     sign.renderOrder = 12;
     sign.name = "sign";
     scene.add(sign);
+    // the hotel's logo replaces the lettering once it has loaded (same-origin, so the canvas stays
+    // usable as a texture)
+    if (signLogo) {
+      const img = new Image();
+      img.onload = () => {
+        drawSignLogo(signTex, img);
+        sign.material.uniforms.uGain.value = 1.15;
+      };
+      img.src = signLogo;
+    }
   }
 
   /* palms */

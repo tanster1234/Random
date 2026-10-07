@@ -202,35 +202,45 @@ export function makePalmAtlas() {
 /** The illuminated resort sign. */
 // The board on the main house's roof: the name, lit warm, with the place underneath.
 // 1440 x 200 matches the board's 8.8 m x 1.22 m.
+// The sign on the main house: the hotel's logo, lit (drawSignLogo, once the image has loaded).
+// Until then, or if it never loads, the name in three lines, laid out like the logo. 4:3.
 export function makeSignTexture(fontFamily) {
   const c = document.createElement("canvas");
-  c.width = 1440;
-  c.height = 200;
+  c.width = 1024;
+  c.height = 768;
   const g = c.getContext("2d");
-  g.clearRect(0, 0, c.width, c.height);
   g.textAlign = "center";
   g.textBaseline = "middle";
-  const text = "AFRICA WAKA WAKA";
-  let size = 120;
-  if ("letterSpacing" in g) g.letterSpacing = "10px";
-  do {
-    g.font = `600 ${size}px ${fontFamily}`;
-    size -= 2;
-  } while (g.measureText(text).width > 1300 && size > 40);
   g.shadowColor = "rgba(255, 206, 140, 0.95)";
-  g.shadowBlur = 30;
   g.fillStyle = "rgba(255, 238, 210, 1)";
-  g.fillText(text, 720, 82);
-  g.shadowBlur = 8;
-  g.fillText(text, 720, 82);
-  g.shadowBlur = 0;
-  g.font = `600 30px ${fontFamily}`;
-  if ("letterSpacing" in g) g.letterSpacing = "16px";
-  g.fillStyle = "rgba(255, 214, 150, 0.9)";
-  g.fillText("LUNGI · SIERRA LEONE", 720, 168);
+  for (const [text, y, size] of [["AFRICA", 170, 220], ["WAKA", 390, 190], ["WAKA", 600, 220]]) {
+    g.font = `600 ${size}px ${fontFamily}`;
+    g.shadowBlur = 30;
+    g.fillText(text, 512, y);
+    g.shadowBlur = 8;
+    g.fillText(text, 512, y);
+  }
   const t = new CanvasTexture(c);
   t.minFilter = LinearMipmapLinearFilter;
   t.magFilter = LinearFilter;
   t.anisotropy = 4;
   return t;
+}
+
+// Puts the logo (lettering on transparency) on the sign, with a soft glow round it.
+export function drawSignLogo(t, img) {
+  const c = t.image;
+  const g = c.getContext("2d");
+  g.clearRect(0, 0, c.width, c.height);
+  const s = Math.min(c.width / img.width, c.height / img.height);
+  const w = img.width * s;
+  const h = img.height * s;
+  const x = (c.width - w) / 2;
+  const y = (c.height - h) / 2;
+  g.shadowColor = "rgba(255, 170, 90, 0.7)";
+  g.shadowBlur = 26;
+  g.drawImage(img, x, y, w, h);
+  g.shadowBlur = 0;
+  g.drawImage(img, x, y, w, h);
+  t.needsUpdate = true;
 }

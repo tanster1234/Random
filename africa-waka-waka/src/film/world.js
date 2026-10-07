@@ -1,7 +1,7 @@
 // World layout for "Wheels Down". Units are metres. y is up, the approach flies toward -z.
 // Lungi is on the near shore; Freetown's hills rise across the estuary to the east (+x).
 import { rng, makePath, smoothstep, clamp } from "./util.js";
-import { VILLAS, PAVILION, GATEHOUSE, PLINTH, WALL_H, SPRING } from "./resort.js";
+import { VILLAS, PAVILION, GATEHOUSE, PLINTH, WALL_H, SPRING, SIGN_SIZE } from "./resort.js";
 
 export const REGION = { x0: -1500, z0: -4500, size: 6000 }; // baked light/albedo maps
 
@@ -311,7 +311,7 @@ export function buildWorld(opts = {}) {
   // the sign stands on the front of the main house's roof
   {
     const [u0, u1, wf] = VILLAS[2];
-    resort.sign = { u: (u0 + u1) / 2, w: wf - 0.66, y: PLINTH + WALL_H + 0.74, width: 8.8, height: 1.22 };
+    resort.sign = { u: (u0 + u1) / 2, w: wf - 0.66, y: PLINTH + WALL_H + 0.19 + SIGN_SIZE.h / 2, width: SIGN_SIZE.w, height: SIGN_SIZE.h };
   }
 
   /* roadside + village palms (silhouettes) */

@@ -45,11 +45,17 @@ A slot whose file is missing shows tie-dye art instead (the browser logs a harml
 | `share.jpg` | The preview when the link is shared (1200 × 630) |
 | `../video/dance.mp4`, `dance.webm`, `dance-poster.jpg` | "Drums on the courtyard" section |
 
-The logo is the hotel's own artwork. `assets/logo.jpg` (cropped to the lettering, 400 × 300)
-shows in the header and footer, `assets/favicon.png` (its first "A", which stays readable at tab
-size) is the browser-tab icon, and `assets/apple-touch-icon.png` (the whole logo, 180 × 180) is
-the icon when someone adds the site to a phone's home screen. To change the logo, replace those
-three files.
+The logo is the hotel's own artwork, and it is the only brand mark on the site:
+
+| File | Where it shows |
+|---|---|
+| `assets/logo.jpg` | Top-left of every page, the footer and the booking emails (on its slate background, 400 × 300) |
+| `assets/logo-hero.png` | Big on the opening screen, and lit on the hotel's sign at the end of the film (lettering only, for dark backdrops) |
+| `assets/favicon.png` | Browser-tab icon (the logo's first "A", which stays readable at tab size) |
+| `assets/apple-touch-icon.png` | Icon when someone adds the site to a phone's home screen |
+| `assets/photos/share.jpg` | Link previews (the villas photo with the logo in a corner) |
+
+To change the logo, replace these files with new ones of the same name and size.
 
 Room photos are 6:5 landscape (about 1080 × 900) and day photos 4:5 portrait (880 × 1100); the
 others are 1280 to 2000 px wide. All are JPEGs at about 80% quality with camera and location data

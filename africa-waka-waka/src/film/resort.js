@@ -34,6 +34,7 @@ export const VILLAS = [
 export const PLINTH = 0.95; // floor level, on top of the brick plinth
 export const WALL_H = 3.35; // floor to eave
 export const SPRING = 2.05; // floor to the top of the column capitals, where the arches spring
+export const SIGN_SIZE = { w: 3.6, h: 2.7 }; // the lit logo on the main house's roof (4:3, like the logo)
 export const PAVILION = { u0: 30, u1: 46, w0: 19, w1: 31 };
 export const GATEHOUSE = { u0: -15, u1: -9, w0: 11.5, w1: 16 };
 
@@ -219,7 +220,7 @@ export function buildResortGeometry(resort) {
       hipRoof(pu0 - 0.4, pu1 + 0.4, wf - 0.4, wb0 + 0.6, ye);
     }
     // the main house carries the sign on a board standing on the front of its roof
-    if (main) box(uc - 4.7, uc + 4.7, ye + 0.06, ye + 1.42, wf - 0.62, wf - 0.5, MAT.DARK);
+    if (main) box(uc - SIGN_SIZE.w / 2 - 0.15, uc + SIGN_SIZE.w / 2 + 0.15, ye + 0.04, ye + SIGN_SIZE.h + 0.34, wf - 0.62, wf - 0.5, MAT.DARK);
   }
 
   /* Chicken Bluff pavilion: raised slate floor, pale-blue columns, iron railing, maroon roof */
