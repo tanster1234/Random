@@ -8,8 +8,8 @@ the guided journeys, the story, the policies and contact. A booking tool opens f
 any "Book" button.
 
 Everything from the current africawakawaka.com is carried over; `CONTENT.md` lists each item
-and where it came from. No video and no generated images: the film is code, and the textile
-art is procedurally generated Sierra Leonean gara (tie-dye).
+and where it came from. The film is code rather than video, and the textile art shown wherever a
+photo is missing is procedurally generated Sierra Leonean gara (tie-dye).
 
 ## Preview it
 
@@ -38,12 +38,18 @@ A slot whose file is missing shows tie-dye art instead (the browser logs a harml
 | `resort.jpg` | Welcome section, under the headline |
 | `room-deluxe.jpg` | Deluxe Single Room card and booking tool |
 | `room-balcony.jpg` | Deluxe Single Room · Balcony, Pool View card and booking tool |
-| `room-suite.jpg` | Executive Suite (no photo yet, so it shows tie-dye art) |
+| `room-suite.jpg` | Executive Suite · Resort View card and booking tool |
 | `pool.jpg` | "Swimming pool with a view" tile |
 | `lobby.jpg` | Wide band at the end of "Our story" |
 | `day-1.jpg` … `day-7.jpg` | Itinerary cards, Day 1 to Day 7 |
 | `share.jpg` | The preview when the link is shared (1200 × 630) |
 | `../video/dance.mp4`, `dance.webm`, `dance-poster.jpg` | "Drums on the courtyard" section |
+
+The logo is the hotel's own artwork. `assets/logo.jpg` (cropped to the lettering, 400 × 300)
+shows in the header and footer, `assets/favicon.png` (its first "A", which stays readable at tab
+size) is the browser-tab icon, and `assets/apple-touch-icon.png` (the whole logo, 180 × 180) is
+the icon when someone adds the site to a phone's home screen. To change the logo, replace those
+three files.
 
 Room photos are 6:5 landscape (about 1080 × 900) and day photos 4:5 portrait (880 × 1100); the
 others are 1280 to 2000 px wide. All are JPEGs at about 80% quality with camera and location data
@@ -119,7 +125,7 @@ js/booking.js       booking tool (rates and submitBooking live here)
 book.php            emails each booking request to the hotel, with a copy to the guest
 js/gara.js          tie-dye generator for photo slots
 js/film.js          built film bundle (do not edit by hand; see src/film)
-assets/             fonts, favicon, film poster, photos
+assets/             fonts, logo and icons, film poster, photos, dance video
 vendor/             GSAP, ScrollTrigger, Lenis (+ licence notices)
 .htaccess           Apache settings for cPanel hosting (redirects, headers, caching)
 package.sh          zips the public files for uploading to cPanel

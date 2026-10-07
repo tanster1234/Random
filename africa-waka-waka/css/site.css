@@ -26,13 +26,9 @@
   background: linear-gradient(to bottom, rgba(4, 7, 13, 0.62), rgba(4, 7, 13, 0));
   transition: opacity 0.45s;
 }
-.site-header[data-theme="dark"] .brand-word,
 .site-header[data-theme="dark"] .nav a,
 .site-header[data-theme="dark"] .header-phone {
   text-shadow: 0 1px 22px rgba(0, 0, 0, 0.55);
-}
-.site-header[data-theme="dark"] .brand-mark {
-  filter: drop-shadow(0 1px 10px rgba(0, 0, 0, 0.5));
 }
 .site-header[data-theme="light"] {
   color: var(--ink);
@@ -61,25 +57,15 @@
   color: inherit;
   flex-shrink: 0;
 }
-.brand-mark {
-  width: 36px;
-  height: 36px;
-  color: var(--gold);
-}
-.site-header[data-theme="light"] .brand-mark {
-  color: var(--laterite);
-}
-.brand-word {
-  font-family: var(--f-display);
-  font-size: 21px;
-  font-weight: 500;
-  letter-spacing: -0.01em;
-  line-height: 1;
-  white-space: nowrap;
-}
-.brand-word em {
-  font-style: italic;
-  font-weight: 400;
+/* the hotel's logo, on its own slate background, so it reads on the dark and the light header */
+.brand-logo {
+  display: block;
+  width: auto;
+  height: 58px;
+  border-radius: 8px;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.12),
+    0 4px 16px rgba(0, 0, 0, 0.28);
 }
 
 .nav {
@@ -249,12 +235,9 @@ body.menu-open .site-header::before {
   .header-cta {
     gap: 10px;
   }
-  .brand-word {
-    font-size: 18px;
-  }
-  .brand-mark {
-    width: 30px;
-    height: 30px;
+  .brand-logo {
+    height: 46px;
+    border-radius: 7px;
   }
   .header-cta .btn--sm {
     padding: 0 14px;
@@ -263,11 +246,8 @@ body.menu-open .site-header::before {
   }
 }
 @media (max-width: 380px) {
-  .brand-word {
-    font-size: 16px;
-  }
-  .brand {
-    gap: 8px;
+  .brand-logo {
+    height: 42px;
   }
 }
 
@@ -2119,8 +2099,9 @@ body.menu-open .site-header::before {
 .footer-bottom p {
   margin: 0;
 }
-.brand--footer .brand-mark {
-  color: var(--gold);
+.brand--footer .brand-logo {
+  height: 96px;
+  border-radius: 12px;
 }
 @media (max-width: 900px) {
   .footer-top {

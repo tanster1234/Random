@@ -15,7 +15,8 @@
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="Africa Waka Waka’s guest villas in Lungi, Sierra Leone">
   <meta name="twitter:card" content="summary_large_image">
-  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="assets/favicon.png" type="image/png">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
   <link rel="preload" href="assets/fonts/fraunces.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="assets/fonts/manrope.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="css/base.css">
@@ -27,6 +28,7 @@
     "@type": "Resort",
     "name": "Africa Waka Waka",
     "url": "https://africawakawaka.com/",
+    "logo": "https://africawakawaka.com/assets/logo.jpg",
     "telephone": "+23290417670",
     "address": {
       "@type": "PostalAddress",
@@ -88,7 +90,6 @@
       <symbol id="i-chev-l" viewBox="0 0 24 24"><path d="m14.5 6-6 6 6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
       <symbol id="i-chev-r" viewBox="0 0 24 24"><path d="m9.5 6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
       <symbol id="i-ext" viewBox="0 0 24 24"><path d="M9 5H5.5A1.5 1.5 0 0 0 4 6.5v12A1.5 1.5 0 0 0 5.5 20h12a1.5 1.5 0 0 0 1.5-1.5V15M13 4h7v7M20 4l-9 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-      <symbol id="i-mark" viewBox="0 0 48 48"><circle cx="24" cy="21" r="10.5" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="24" cy="21" r="4.2" fill="currentColor"/><path d="M5 30.5c3.2 0 3.2 2.2 6.4 2.2s3.2-2.2 6.3-2.2 3.2 2.2 6.3 2.2 3.2-2.2 6.3-2.2 3.2 2.2 6.4 2.2 3.1-2.2 6.3-2.2M9 37.5c2.5 0 2.5 1.8 5 1.8s2.5-1.8 5-1.8 2.5 1.8 5 1.8 2.5-1.8 5-1.8 2.5 1.8 5 1.8 2.5-1.8 5-1.8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M24 4.5v3.2M11.3 9.3l2.3 2.3M36.7 9.3l-2.3 2.3M6.5 21h3.2M38.3 21h3.2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
     </defs>
   </svg>
 
@@ -96,8 +97,7 @@
 
   <header class="site-header" data-theme="dark">
     <a class="brand" href="#top" aria-label="Africa Waka Waka, back to the top">
-      <svg class="brand-mark" aria-hidden="true"><use href="#i-mark"/></svg>
-      <span class="brand-word">Africa <em>Waka Waka</em></span>
+      <img class="brand-logo" src="assets/logo.jpg" alt="" width="400" height="300">
     </a>
     <nav class="nav" aria-label="Main">
       <a href="#rooms">Rooms</a>
@@ -283,7 +283,7 @@
           </article>
           <article class="room reveal-card">
             <div class="room-media gara" data-gara="sunburst" data-tone="gold" data-seed="7">
-              <img src="assets/photos/room-suite.jpg" alt="Executive Suite with resort view" loading="lazy" onerror="this.remove()">
+              <img src="assets/photos/room-suite.jpg" alt="Executive Suite: a king bed and a queen bed, a sofa with a coffee table, and a work desk" loading="lazy" onerror="this.remove()">
               <span class="room-num" aria-hidden="true">03</span>
             </div>
             <div class="room-body">
@@ -681,7 +681,7 @@
     </div>
 
     <div class="wrap footer-bottom">
-      <a class="brand brand--footer" href="#top"><svg class="brand-mark" aria-hidden="true"><use href="#i-mark"/></svg><span class="brand-word">Africa <em>Waka Waka</em></span></a>
+      <a class="brand brand--footer" href="#top"><img class="brand-logo" src="assets/logo.jpg" alt="Africa Waka Waka" width="400" height="300" loading="lazy"></a>
       <nav aria-label="Footer">
         <a href="#rooms">Rooms</a>
         <a href="#resort">Resort</a>
